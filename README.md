@@ -1,5 +1,7 @@
 # GeoVoice
 
+A Quizizz-style web application for learning geography.
+
 GeoVoice is a geography quiz application with username/password sign-in and face verification. The same face may be used for multiple uniquely named accounts. Account data and quiz results are stored in PostgreSQL and work across devices.
 
 ## Start here
