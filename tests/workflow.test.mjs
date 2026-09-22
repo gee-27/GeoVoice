@@ -28,8 +28,13 @@ test('browser UI connected to real API: enrollment, camera selection, quiz, sett
  assert.match($('dialog').textContent,/Identity confirmed/);act('#identity-continue');const recovery=$('.recovery-code').textContent;assert.ok(recovery);$('#saved-code').checked=true;$('#saved-code').onchange();act('#recovery-done');
  assert.equal($('.sidebar').hidden,false);value('#category','All');value('#count','5');await submit('#quiz-form');assert.match($('main').textContent,/Question 1 of 5/);assert.equal($('.sidebar').hidden,true);assert.ok($('.context-photo img').getAttribute('src').startsWith('./images/'));act('#exit');act('#dialog-cancel');assert.equal($('.sidebar').hidden,true);
  value('#typed','not a valid answer');await submit('#typed-form');assert.equal($('#feedback').textContent,'');
- await registered.answer_geography_question.execute({option:'A'});act('#hold');act('#next');
- for(let i=1;i<5;i++){await act('[data-answer="0"]');act('#hold');act('#next');}
+ await act('#listen');assert.equal(speechInstance.interimResults,true);assert.equal(speechInstance.maxAlternatives,5);
+ await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'option A'}],{isFinal:false})]});assert.match($('#speech-message').textContent,/Hearing/);assert.ok($('#speech-submit-now'));assert.equal($('#feedback').textContent,'');
+ await speechInstance.say('my answer is letter A');assert.ok($('#next'));act('#hold');act('#next');
+ value('#speech-language','en-PH');$('#speech-language').onchange();await act('#listen');assert.equal(speechInstance.lang,'en-PH');
+ await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'unrecognized noise'},{transcript:'option A'}],{isFinal:true})]});assert.equal($('#feedback').textContent,'');assert.ok($('[data-speech-choice="0"]'));await act('[data-speech-choice="0"]');act('#hold');act('#next');
+ await act('#listen');await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'option A'}],{isFinal:false})]});await act('#speech-submit-now');act('#hold');act('#next');
+ for(let i=3;i<5;i++){await act('[data-answer="0"]');act('#hold');act('#next');}
  assert.match($('main').textContent,/saved to your account/);assert.equal($('.sidebar').hidden,false);await act('#progress-link');assert.match($('main').textContent,/Recent quizzes/);
  act('[data-nav="settings"]');act('#change-password');value('#current-password',password);const newPassword='Another long UI account password!';value('#new-password',newPassword);value('#confirm-new',newPassword);await submit('#password-form');assert.equal($('dialog'),null);
  await act('#sign-out');value('#username','ui_explorer');value('#password',newPassword);await submit('#auth-form');await act('#camera-enable');await act('#capture');act('#identity-continue');

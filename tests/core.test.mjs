@@ -11,3 +11,10 @@ test('randomized quizzes retain the correct answer and do not duplicate question
 test('matching requires two new samples and at least two of three matching references',()=>{const a=Array(128).fill(.1),b=Array(128).fill(.11),c=Array(128).fill(.8);assert.ok(matchesFace([a,b],[a,a,b]));assert.ok(!matchesFace([a,c],[a,a,b]));assert.ok(!matchesFace([a],[a,a,b]));assert.ok(!matchesFace([a,b],[a,c,c]));assert.equal(distance([],[]),Infinity);assert.equal(distance(Array(128).fill(NaN),a),Infinity);});
 test('score calculation covers empty and mixed results',()=>{assert.deepEqual(score([]),{correct:0,total:0,percent:0});assert.deepEqual(score([{selected:0,question:{answer:0}},{selected:0,question:{answer:1}}]),{correct:1,total:2,percent:50});});
 test('all bundled model assets match recorded SHA256 checksums',async()=>{const checks=JSON.parse(await readFile(new URL('../asset-checksums.json',import.meta.url)));for(const [name,hash] of Object.entries(checks)){const data=await readFile(new URL('../dist/'+name,import.meta.url));assert.equal(createHash('sha256').update(data).digest('hex'),hash,name);}});
+
+test('speech phrases, letter plus name, and word spacing match without guessing',()=>{
+ const options=['Tokyo','São Paulo','Mount Everest','New Zealand'];
+ for(const text of ['my answer is letter A','the answer is option A','A Tokyo','it is Tokyo','Tokyo please'])assert.equal(resolveAnswer(text,options),0);
+ assert.equal(resolveAnswer('SaoPaulo',options),1);assert.equal(resolveAnswer('Mt Everest',options),2);
+ for(const text of ['B Tokyo','not Tokyo','Tokyo or Sao Paulo','Tokyo sorry Sao Paulo','maybe A','tok'])assert.equal(resolveAnswer(text,options),null);
+});

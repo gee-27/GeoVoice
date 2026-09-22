@@ -31,3 +31,7 @@ The previous production npm audit reported no known installed runtime dependency
 The updated interface/API workflow passes with assertions for navigation hiding/restoration, camera selection, quiz exit cancellation and confirmation, question imagery, results, account changes, recovery, and deletion. An additional image check verifies all forty questions map to bundled JPEG assets under 500 KB each. Source syntax checks pass.
 
 Real-browser review used an isolated in-memory preview account, not the production database. Desktop and 390-pixel mobile views were inspected for home, sign-in, focused quiz, and camera enrollment. Home and quiz had no horizontal overflow; quiz navigation was absent from the accessibility tree. Camera/model behavior remains covered with synthetic test outputs; this review did not collect a live face image.
+
+## Speech response revision
+
+Eight core tests and the updated interface/API workflow passed. New checks cover natural answer phrasing, consistent letter-plus-name answers, spacing and Mt/Mount normalization, rejection of negation and conflicting choices, interim transcripts without automatic submission, final speech submission, explicit confirmation of alternative transcriptions, changing speech language, and submitting a matched interim result immediately. Interim output never determines correctness; the server still grades each submitted choice. Speech callbacks are simulated: real microphone, accent, provider accuracy, and end-to-end production latency were not measured.

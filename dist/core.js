@@ -1,10 +1,18 @@
 export function normalize(text) {return String(text).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
 export function resolveAnswer(transcript, options) {
-  const clean=normalize(transcript).replace(/^(my answer is|the answer is|i choose|i think it is|option|answer|letter) /,'').replace(/^the /,'').trim();
+  let clean=normalize(transcript);
+  if(/\b(not|no|never|maybe|or|instead|sorry)\b/.test(clean))return null;
+  clean=clean.replace(/^(?:(?:my |the )?answer is|i choose|i think it is|i think|it is|it s|its) /,'');
+  clean=clean.replace(/^(?:(?:option|answer|letter|number) )+/,'').replace(/^the /,'').replace(/ please$/,'').trim();
   const letters={a:0,ay:0,b:1,bee:1,be:1,c:2,see:2,sea:2,d:3,dee:3,one:0,two:1,three:2,four:3,'1':0,'2':1,'3':2,'4':3};
+  const canonical=t=>normalize(t).replace(/^the /,'').replace(/^mt /,'mount ').replace(/\s/g,'');
+  const matches=options.map((o,i)=>canonical(o)===canonical(clean)?i:-1).filter(i=>i>=0);
+  if(matches.length)return matches.length===1?matches[0]:null;
   if(Object.hasOwn(letters,clean)&&letters[clean]<options.length)return letters[clean];
-  const matches=options.map((o,i)=>normalize(o).replace(/^the /,'')===clean?i:-1).filter(i=>i>=0);
-  return matches.length===1?matches[0]:null;
+  // A spoken letter followed by a name must agree with that name.
+  const combined=clean.match(/^(a|ay|b|bee|be|c|see|sea|d|dee) (.+)$/);
+  if(combined){const index=letters[combined[1]];if(options[index]&&canonical(options[index])===canonical(combined[2]))return index;}
+  return null;
 }
 export function shuffle(items, random=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 export function buildQuiz(bank, category='All',count=10,random=Math.random){
