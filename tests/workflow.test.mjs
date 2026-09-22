@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {parseHTML} from 'linkedom';
+import {testApp,password} from './helpers.mjs';
+const backend=await testApp();
+const {document,window}=parseHTML(await readFile(new URL('../dist/index.html',import.meta.url),'utf8'));
+Object.assign(globalThis,{document,window});
+let stops=0,device='main-camera',speechInstance;
+const preferences=new Map();globalThis.localStorage={getItem:k=>preferences.get(k)||null,setItem:(k,v)=>preferences.set(k,v)};
+const track={stop(){stops++;},getSettings(){return {deviceId:device};}};
+Object.defineProperty(globalThis,'navigator',{value:{mediaDevices:{async getUserMedia(constraints){if(constraints.video.deviceId)device=constraints.video.deviceId.exact;return {getTracks:()=>[track],getVideoTracks:()=>[track]};},async enumerateDevices(){return [{kind:'videoinput',deviceId:'main-camera',label:'Main webcam'},{kind:'videoinput',deviceId:'virtual-camera',label:'Virtual camera'}];}}},configurable:true});
+window.HTMLElement.prototype.play=async()=>{};window.HTMLElement.prototype.showModal=function(){this.open=true;};window.HTMLElement.prototype.close=function(){this.open=false;};window.speechSynthesis={cancel(){}};
+class SpeechMock{constructor(){speechInstance=this;}start(){}abort(){}say(text){return this.onresult?.({resultIndex:0,results:[Object.assign([{transcript:text}],{isFinal:true})]});}}
+window.SpeechRecognition=SpeechMock;
+globalThis.faceapi={nets:Object.fromEntries(['tinyFaceDetector','faceLandmark68Net','faceRecognitionNet'].map(n=>[n,{async loadFromUri(){}}])),TinyFaceDetectorOptions:class{},detectAllFaces(){return {withFaceLandmarks(){return {async withFaceDescriptors(){return [{descriptor:new Float32Array(128).fill(.1),detection:{box:{width:180,height:220}}}];}};}};}};window.faceapi=globalThis.faceapi;
+const registered={};document.modelContext={registerTool(tool){registered[tool.name]=tool;}};
+const $=s=>document.querySelector(s),act=s=>$(s).onclick({preventDefault(){}}),submit=s=>$(s).onsubmit({preventDefault(){}}),value=(s,v)=>Object.defineProperty($(s),'value',{value:v,writable:true,configurable:true});
+const wait=()=>new Promise(r=>setTimeout(r,40));
+test('browser UI connected to real API: enrollment, camera selection, quiz, settings and recovery',async t=>{
+ const app=backend;t.after(()=>app.db.close());const client=app.client('ui-test');
+ globalThis.fetch=async(url,options={})=>{const headers=Object.fromEntries(Object.entries(options.headers||{}).map(([k,v])=>[k.toLowerCase(),v]));const response=await client.request(url.slice(4),options.method||'GET',options.body?JSON.parse(options.body):undefined,headers);return {ok:response.status>=200&&response.status<300,status:response.status,json:async()=>response.data};};
+ await import('../dist/app.js');assert.match($('main').textContent,/Welcome back/);await assert.rejects(()=>registered.answer_geography_question.execute({option:'A'}),/No signed-in/);
+ act('#register-tab');value('#name','UI Explorer');value('#username','ui_explorer');value('#password',password);value('#confirm-password',password);$('#consent').checked=true;await submit('#auth-form');await wait();
+ assert.ok($('#camera-select'));value('#camera-select','main-camera');await act('#camera-enable');assert.equal(preferences.get('geovoice-camera'),'main-camera');assert.match($('#camera-message').textContent,/Ready/);
+ value('#camera-select','virtual-camera');await $('#camera-select').onchange();assert.equal(device,'virtual-camera');
+ await act('#capture');assert.ok(stops>=2);assert.equal($('#phone'),null);assert.equal((await client.request('/history')).status,200);
+ assert.match($('dialog').textContent,/Identity confirmed/);act('#identity-continue');const recovery=$('.recovery-code').textContent;assert.ok(recovery);$('#saved-code').checked=true;$('#saved-code').onchange();act('#recovery-done');
+ value('#category','All');value('#count','5');await submit('#quiz-form');assert.match($('main').textContent,/Question 1 of 5/);
+ value('#typed','not a valid answer');await submit('#typed-form');assert.equal($('#feedback').textContent,'');
+ await registered.answer_geography_question.execute({option:'A'});act('#hold');act('#next');
+ for(let i=1;i<5;i++){await act('[data-answer="0"]');act('#hold');act('#next');}
+ assert.match($('main').textContent,/saved to your account/);await act('#progress-link');assert.match($('main').textContent,/Recent quizzes/);
+ act('[data-nav="settings"]');act('#change-password');value('#current-password',password);const newPassword='Another long UI account password!';value('#new-password',newPassword);value('#confirm-new',newPassword);await submit('#password-form');assert.equal($('dialog'),null);
+ await act('#sign-out');value('#username','ui_explorer');value('#password',newPassword);await submit('#auth-form');await act('#camera-enable');await act('#capture');act('#identity-continue');
+ act('[data-nav="settings"]');act('#reenroll-face');value('#current-password',newPassword);await submit('#password-form');await act('#camera-enable');await act('#capture');assert.match($('main').textContent,/Manage your account/);
+ await act('#sign-out');$('#recover-link').click();value('#username','ui_explorer');value('#recovery',recovery);value('#password','Recovered long UI account password!');value('#confirm-password','Recovered long UI account password!');await submit('#auth-form');assert.match($('dialog').textContent,/Identity confirmed/);act('#identity-continue');assert.notEqual($('.recovery-code').textContent,recovery);$('#saved-code').checked=true;$('#saved-code').onchange();act('#recovery-done');act('[data-nav="settings"]');
+ act('#delete-profile');value('#current-password','Recovered long UI account password!');await submit('#password-form');assert.match($('main').textContent,/Welcome back/);assert.equal((await app.db.query("SELECT id FROM users WHERE username='ui_explorer'")).rows.length,0);
+ window.dispatchEvent(new window.Event('pagehide'));
+});
