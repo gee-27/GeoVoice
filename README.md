@@ -84,3 +84,9 @@ This code is prepared for deployment; it is not live until you provision service
 - `tests/`: backend and interface workflows, algorithm checks, asset integrity.
 
 Third-party face-api.js 0.22.2 and model assets are included. Its MIT license is in `dist/vendor/LICENSE.face-api.txt`; bundled checksums are in `asset-checksums.json`. The library is a legacy dependency; a clean npm audit of the server packages does not audit that vendored browser library or certify model accuracy.
+
+## Tropical explorer interface
+
+The interface uses ocean blue, coral, lime, and sunshine colors across sign-in, enrollment, home, quizzes, history, profile, and dialogs. Topic tiles select a quiz category. Question photos are shared at category level, independent of the answer: four bundled scenes cover all forty questions. See PHOTO-CREDITS.md for sources and the no-answer-clue policy.
+
+Camera enrollment and verification use a focused screen with navigation hidden, webcam controls, and back actions. Active quizzes hide the sidebar, profile control, and footer, retain voice/type/click answers and progress, and confirm before quitting to home. Answer cards use letters and shapes as well as color, with explicit correctness labels after submission. Reduced-motion preferences and mobile layouts are supported.

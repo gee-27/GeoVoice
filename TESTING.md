@@ -25,3 +25,9 @@ The previous production npm audit reported no known installed runtime dependency
 5. Test intended webcams, camera switching, low light, multiple faces, denied camera access, and microphone fallback.
 6. Test account history across devices, password change, face replacement, export, and deletion.
 7. Restore a database backup with its original encryption key in an isolated environment.
+
+## Tropical redesign regression checks
+
+The updated interface/API workflow passes with assertions for navigation hiding/restoration, camera selection, quiz exit cancellation and confirmation, question imagery, results, account changes, recovery, and deletion. An additional image check verifies all forty questions map to bundled JPEG assets under 500 KB each. Source syntax checks pass.
+
+Real-browser review used an isolated in-memory preview account, not the production database. Desktop and 390-pixel mobile views were inspected for home, sign-in, focused quiz, and camera enrollment. Home and quiz had no horizontal overflow; quiz navigation was absent from the accessibility tree. Camera/model behavior remains covered with synthetic test outputs; this review did not collect a live face image.
