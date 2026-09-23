@@ -3,7 +3,7 @@ import {HttpError,requireThat,token,digest,username,displayName,validatePassword
 import {buildQuiz,matchesFace,distance,score} from '../dist/core.js';
 import {questions,categories} from './questions.js';
 const minute=60000,hour=60*minute;
-const publicUser=u=>({id:u.id,username:u.username,name:u.name,created:new Date(Number(u.created)).toISOString(),hasPhoto:Boolean(u.photo_cipher)});
+const publicUser=u=>({id:u.id,username:u.username,name:u.name,created:new Date(Number(u.created)).toISOString(),hasPhoto:Boolean(u.photo_cipher),hasFace:Boolean(u.face_cipher)});
 const safeQuestion=q=>({id:q.id,category:q.category,prompt:q.prompt,options:q.options});
 const result=q=>({id:q.id,category:q.category,date:new Date(Number(q.completed)).toISOString(),duration:Math.round((Number(q.completed)-Number(q.started))/1000),answers:q.answers,...score(q.answers)});
 export const SECURITY_HEADERS={
@@ -35,7 +35,7 @@ export function createApi({db,config,now=Date.now}){
   const url=new URL(req.url,config.origin),route=url.pathname,method=req.method;
   if(route==='/api/maintenance'&&method==='GET'){requireThat(config.cronSecret&&req.headers.authorization==='Bearer '+config.cronSecret,401,'Unauthorized.');await cleanExpired();return send(res,200,{ok:true});}
   if(route==='/api/health'&&method==='GET'){await db.query('SELECT 1');return send(res,200,{status:'ok'});}
-  if(route==='/api/config'&&method==='GET')return send(res,200,{categories,registrationOpen:config.registration,operator:config.operator,privacyContact:config.privacyContact,consentVersion:'2026-09-22',authentication:['password','face']});
+  if(route==='/api/config'&&method==='GET')return send(res,200,{categories,registrationOpen:config.registration,operator:config.operator,privacyContact:config.privacyContact,consentVersion:'2026-09-22',faceRecognitionEnabled:config.faceRecognition,authentication:config.faceRecognition?['password','face']:['password']});
   const ip=config.trustProxy?String(req.headers['x-forwarded-for']||'').split(',').map(s=>s.trim()).filter(Boolean).at(-1)||req.socket?.remoteAddress:req.socket?.remoteAddress;
   await limit('request:'+keyed(ip||'unknown'),240,minute);
   let body={};
@@ -45,16 +45,16 @@ export function createApi({db,config,now=Date.now}){
   if(route==='/api/session'&&method==='GET'){if(!s)return send(res,200,{stage:'anonymous'});const u=await getUser(s);return send(res,200,{stage:s.stage,csrf:s.csrf,user:publicUser(u)});}
   if(route==='/api/auth/register'&&method==='POST'){
    requireThat(config.registration,403,'New registrations are currently closed.');await limit('register:'+keyed(ip||'unknown'),15,hour);await cleanExpired();
-   const name=displayName(body.name),login=username(body.username),password=validatePassword(body.password),samples=validateSamples(body.samples,3);
-   requireThat(body.consent===true&&body.consentVersion==='2026-09-22',400,'Please agree to the current privacy notice.');requireThat(samples.every(x=>distance(x,samples[0])<.45),400,'Face captures were inconsistent. Try again.');
+   const name=displayName(body.name),login=username(body.username),password=validatePassword(body.password),samples=config.faceRecognition?validateSamples(body.samples,3):null;
+   if(config.faceRecognition)requireThat(body.consent===true&&body.consentVersion==='2026-09-22',400,'Please agree to store your face template.');if(samples)requireThat(samples.every(x=>distance(x,samples[0])<.45),400,'Face captures were inconsistent. Try again.');
    const photo=validatePhoto(body.photo,body.photoConsent);const passwordHash=await hashPassword(password),id=randomUUID(),t=now();
-   const code=recoveryCode();let response;try{response=await db.transaction(async c=>{const u=await one(`INSERT INTO users(id,username,name,password_hash,face_cipher,created,consent_at,consent_version,verified,recovery_hash) VALUES($1,$2,$3,$4,$5,$6,$6,$7,TRUE,$8) RETURNING *`,[id,login,name,passwordHash,encryptFace(samples,config.key,id),t,body.consentVersion,recoveryHash(code)],c);if(photo){u.photo_cipher=encryptFace(photo,config.key,u.id+':photo');await c.query('UPDATE users SET photo_cipher=$1 WHERE id=$2',[u.photo_cipher,u.id]);}if(s)await c.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);return issue(c,res,u,'full');});}catch(e){if(e.code==='23505')throw new HttpError(409,'That username is unavailable. Choose another or sign in.');throw e;}
+   const code=recoveryCode();let response;try{response=await db.transaction(async c=>{const u=await one(`INSERT INTO users(id,username,name,password_hash,face_cipher,created,consent_at,consent_version,verified,recovery_hash) VALUES($1,$2,$3,$4,$5,$6,$6,$7,TRUE,$8) RETURNING *`,[id,login,name,passwordHash,samples?encryptFace(samples,config.key,id):null,t,body.consentVersion||'2026-09-22',recoveryHash(code)],c);if(photo){u.photo_cipher=encryptFace(photo,config.key,u.id+':photo');await c.query('UPDATE users SET photo_cipher=$1 WHERE id=$2',[u.photo_cipher,u.id]);}if(s)await c.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);return issue(c,res,u,'full');});}catch(e){if(e.code==='23505')throw new HttpError(409,'That username is unavailable. Choose another or sign in.');throw e;}
    return send(res,201,{...response,recoveryCode:code});
   }
 
   if(route==='/api/auth/login'&&method==='POST'){
    await limit('login-ip:'+keyed(ip||'unknown'),25,15*minute);await limit('login-name:'+keyed(String(body.username).toLowerCase()),15,15*minute);
-   const u=await credentials(body);if(s)await db.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);return send(res,200,await issue(db,res,u,'face'));
+   const u=await credentials(body);if(s)await db.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);return send(res,200,await issue(db,res,u,config.faceRecognition&&u.face_cipher?'face':'full'));
   }
   if(route==='/api/auth/recover'&&method==='POST'){
    await limit('recover-ip:'+keyed(ip||'unknown'),10,hour);await limit('recover-name:'+keyed(String(body.username).toLowerCase()),5,hour);
@@ -66,7 +66,7 @@ export function createApi({db,config,now=Date.now}){
 
   if(route==='/api/auth/logout'&&method==='POST'){requireSession('any');await db.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);setCookie(res,'',0);return send(res,200,{ok:true});}
   if(route==='/api/auth/face'&&method==='POST'){
-   requireSession('face');const photo=validatePhoto(body.photo,body.photoConsent);await limit('face:'+s.user_id,10,15*minute);const samples=validateSamples(body.samples,2);const u=await getUser(s);
+   requireThat(config.faceRecognition,403,'Face sign-in is currently disabled.');requireSession('face');const photo=validatePhoto(body.photo,body.photoConsent);await limit('face:'+s.user_id,10,15*minute);const samples=validateSamples(body.samples,2);const u=await getUser(s);
    requireThat(matchesFace(samples,decryptFace(u.face_cipher,config.key,u.id)),401,'Your face was not recognized. Check your lighting and try again.');
    const response=await db.transaction(async c=>{const current=await getUser(s,c,true);const deleted=await c.query("DELETE FROM sessions WHERE id_hash=$1 AND stage='face' RETURNING id_hash",[s.id_hash]);requireThat(deleted.rows.length,409,'This sign-in step has already been used.');let code=null;if(!current.verified){code=recoveryCode();await c.query('UPDATE users SET verified=TRUE,recovery_hash=$1 WHERE id=$2',[recoveryHash(code),current.id]);}if(photo){current.photo_cipher=encryptFace(photo,config.key,current.id+':photo');await c.query('UPDATE users SET photo_cipher=$1 WHERE id=$2',[current.photo_cipher,current.id]);}return {...await issue(c,res,current,'full'),recoveryCode:code};});return send(res,200,response);
   }

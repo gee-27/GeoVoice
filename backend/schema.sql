@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
  id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
- password_hash TEXT NOT NULL, face_cipher TEXT NOT NULL, recovery_hash TEXT, verified BOOLEAN NOT NULL DEFAULT FALSE,
+ password_hash TEXT NOT NULL, face_cipher TEXT, recovery_hash TEXT, verified BOOLEAN NOT NULL DEFAULT FALSE,
  created BIGINT NOT NULL, consent_at BIGINT NOT NULL, consent_version TEXT NOT NULL,
  auth_version INTEGER NOT NULL DEFAULT 1
 );
@@ -36,3 +36,6 @@ UPDATE metadata SET value='2' WHERE key='schema_version';
 
 -- Additive profile-photo migration; existing sessions and accounts are retained.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_cipher TEXT;
+
+-- Face recognition can be disabled for new accounts; retain existing templates.
+ALTER TABLE users ALTER COLUMN face_cipher DROP NOT NULL;

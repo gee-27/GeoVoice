@@ -12,5 +12,5 @@ export function loadConfig(env=process.env){
  if(!env.DATABASE_URL)throw new Error('Set DATABASE_URL to a PostgreSQL connection string.');
  if(production&&(!env.PRIVACY_CONTACT||!env.OPERATOR_NAME))throw new Error('Set OPERATOR_NAME and PRIVACY_CONTACT before public launch.');
  if(env.PRIVACY_CONTACT&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.PRIVACY_CONTACT))throw new Error('PRIVACY_CONTACT must be an email address.');
- return {production,port,origin,key:Buffer.from(keyText,'base64'),databaseUrl:env.DATABASE_URL,host:env.HOST||'127.0.0.1',operator:env.OPERATOR_NAME||'GeoVoice',privacyContact:env.PRIVACY_CONTACT||null,trustProxy:env.TRUST_PROXY==='1'||Boolean(env.VERCEL),registration:env.REGISTRATION_OPEN!=='0',staticRoot:path.join(root,'dist'),cronSecret:env.CRON_SECRET||null};
+ return {production,port,origin,key:Buffer.from(keyText,'base64'),databaseUrl:env.DATABASE_URL,host:env.HOST||'127.0.0.1',operator:env.OPERATOR_NAME||'GeoVoice',privacyContact:env.PRIVACY_CONTACT||null,trustProxy:env.TRUST_PROXY==='1'||Boolean(env.VERCEL),registration:env.REGISTRATION_OPEN!=='0',faceRecognition:env.FACE_RECOGNITION_ENABLED!=='0',staticRoot:path.join(root,'dist'),cronSecret:env.CRON_SECRET||null};
 }

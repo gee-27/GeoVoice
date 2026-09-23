@@ -70,6 +70,7 @@ The migration is idempotent and uses a PostgreSQL advisory lock. Run it against 
 | `OPERATOR_NAME` | Name of the responsible operator |
 | `PRIVACY_CONTACT` | Working email address for user requests |
 | `REGISTRATION_OPEN` | `0` during setup, `1` when ready for registrations |
+| `FACE_RECOGNITION_ENABLED` | `1` to require face verification at sign-in (default); `0` for password-only sign-in |
 | `CRON_SECRET` | Generated maintenance secret, used by Vercel's daily cleanup request |
 
 If you do not know the assigned URL yet, create the deployment with registrations closed, obtain its primary URL, set `APP_ORIGIN`, and redeploy. Requests from any other origin, including arbitrary preview URLs, are intentionally rejected. Configure a separate environment for previews rather than weakening origin validation.
@@ -118,3 +119,9 @@ The Docker image and cloud deployment must be verified in your hosting account; 
 Keep the original FACE_ENCRYPTION_KEY and back up the database before migration. Run `npm run db:migrate` before deploying this version. It removes obsolete phone/verification columns and expires existing sessions once; accounts and quiz history remain. Repeating the migration does not sign users out again. Remove TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID, and SMS_DAILY_LIMIT from Vercel if previously added. No SMS service is required.
 
 The profile-photo update requires another idempotent `npm run db:migrate` before deployment to add `users.photo_cipher`. It preserves existing data and the current schema-version compatibility.
+
+## Switching face recognition
+
+In Vercel, open **Project → Settings → Environment Variables**. Set `FACE_RECOGNITION_ENABLED` to `0` for password-only access or `1` to require face verification for accounts that have enrolled a face. Apply it to Production (and Preview/Development if needed), save, then redeploy. The application also works with the variable unset; it defaults to enabled.
+
+When disabled, new accounts use password-only sign-in and are not asked for camera permission. Existing encrypted face templates are retained. Accounts without a template can use password sign-in and enroll one from **My profile**; once enrolled, they will use face verification the next time the feature is enabled. Run `npm run db:migrate` before deploying this version; migration makes the face template optional for new password-only accounts.

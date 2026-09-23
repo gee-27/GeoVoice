@@ -96,3 +96,8 @@ Camera enrollment and verification use a focused screen with navigation hidden, 
 Select **Save this capture as my profile photo** on the camera screen to save a 256-pixel square JPEG while enrolling or successfully verifying your face. Existing accounts can do this on their next sign-in, or under My profile → Update face template. Photos are optional, encrypted in PostgreSQL, available only to the fully signed-in owner, and removable independently of the face template. The profile pane and header show the saved photo; accounts without one keep their initial.
 
 Run `npm run db:migrate` before deploying this update. The additive `photo_cipher` column retains schema version 2 for compatibility with the currently running version, preserves accounts and history, and does not expire sessions. Keep the existing encryption key. The five-second feedback countdown shows changing seconds and a shrinking bar; Pause, navigation, quit confirmation, and tab hiding cancel advancement. Reduced-motion mode displays the numeric countdown without the moving bar.
+
+
+## Face recognition switch
+
+Set `FACE_RECOGNITION_ENABLED=1` in your deployment environment to require face verification at sign-in (default). Set it to `0` to use username and password only. Redeploy after changing the variable. When disabled, new accounts do not enroll or store a face template; existing templates stay encrypted in the database. Users without a template can still sign in when recognition is enabled and enroll one under **My profile → Enroll face template**. Users with an existing template will be prompted for face verification when the feature is enabled.
