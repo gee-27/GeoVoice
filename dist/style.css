@@ -76,3 +76,18 @@ dialog{border:3px solid var(--retro-ink);border-radius:7px;box-shadow:9px 9px 0 
 .focus-mode .quiz-layout .voice-panel{border:3px solid var(--retro-ink);border-radius:7px;box-shadow:6px 6px 0 var(--retro-ink);padding-top:43px}.profile-avatar{border:3px solid var(--retro-ink);border-radius:5px;box-shadow:4px 4px 0 var(--retro-ink)}
 footer{background:#dcd3cf;border-top:3px solid var(--retro-ink);font-family:'Courier New',monospace}
 @media(max-width:680px){.workspace{border-left:0}.sidebar{border-right:0;border-bottom:3px solid var(--retro-ink);box-shadow:0 4px 0 #172f3b30}.topbar:before{display:none}.card{box-shadow:5px 5px 0 var(--retro-ink)}.journey-banner{box-shadow:5px 5px 0 var(--retro-ink)}.topic-tile{box-shadow:4px 4px 0 var(--retro-ink)}.topbar{border-bottom-width:2px}}
+
+/* High-contrast surfaces for panels that retain light text. */
+.card.camera-card{background:#315d70;color:#fff}
+.card.camera-card h2,.card.camera-card h3,.card.camera-card .status-line{color:#fff}
+.card.camera-card p,.card.camera-card .fine,.card.camera-card .camera-message{color:#eef9f5!important}
+.card.camera-card .eyebrow{color:#d5f58b}
+.card.camera-card .number{background:#087d88;border-color:#b9e3d8;color:#fff}
+.card.explorer-card{background:linear-gradient(180deg,#28566bf2,#234a5ff5),url('./images/coast.jpg') center/cover;color:#fff}
+.card.explorer-card h2,.card.explorer-card .status-line{color:#fff}
+.card.explorer-card p,.card.explorer-card .fine{color:#eef9f5!important}
+.card.explorer-card .eyebrow{color:#a9ed74}
+.focus-mode .quiz-layout .card.voice-panel{background:#315d70;color:#fff;border-color:var(--retro-ink)}
+.focus-mode .quiz-layout .voice-panel h3,.focus-mode .quiz-layout .voice-panel label{color:#fff}
+.focus-mode .quiz-layout .voice-panel>p,.focus-mode .quiz-layout .voice-panel .speech-message,.focus-mode .quiz-layout .voice-panel .fine,.focus-mode .quiz-layout .voice-panel #speech-suggestions{color:#eef9f5!important}
+.focus-mode .quiz-layout .voice-panel select{background:#fffdf4;color:#173747}
