@@ -50,3 +50,9 @@ main{padding:16px 22px 24px}.top{min-height:60px;position:sticky;top:0;z-index:8
  .lobby-grid>.card:nth-child(2)>h2{font-size:19px}.people{max-height:24vh}.person{gap:6px}.team-select{font-size:16px}
  .join-card{margin:8px auto}.join-card h1{font-size:28px}.stage-bottom{grid-template-columns:1fr}
 }
+/* Pair host labels with controls so game creation stays within reach. */
+#host-form{display:grid;grid-template-columns:minmax(95px,.65fr) minmax(0,1.35fr);gap:10px 12px;align-items:center}
+#host-form>label{margin:0}#host-form>p,#host-form>.radio,#host-form>button{grid-column:1/-1;margin:4px 0}
+.setup .radio{display:flex;align-items:center;gap:10px;min-height:44px}
+.setup .radio input{width:20px;height:20px;min-height:20px;flex:none;margin:0}
+@media(max-width:680px){.host-setup h1{font-size:25px}.host-setup .card{padding:38px 12px 12px}#host-form{gap:8px}.host-setup .card>p{font-size:14px}.host-setup #host-form>p{font-size:12px}}
