@@ -4,8 +4,10 @@ import {loadModels,capture} from './face.js';
 import {contextImage,questionImage} from './visuals.js';
 import {captureProfilePhoto} from './profile-photo.js';
 import {startCountdown} from './countdown.js';
+import {installCompactLayout} from './compact.js';
 function photo(question,extra=''){const image=questionImage(question); return `<figure class="context-photo ${image.fit==='contain'?'contain':''} ${extra}"><img src="./images/${image.file}" alt="${image.alt}" width="1400" height="934" decoding="async"><figcaption>${image.label} <span>Question context · no answer labels</span></figcaption></figure>`;}
 const $=s=>document.querySelector(s),main=$('main');
+installCompactLayout(main);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
 let user=null,view='auth',busy=false,generation=0,stream=null,cameraReady=false,recognition=null,advanceTimer=null,toastTimer=null,speechRetryTimer=null,speechRetries=0;

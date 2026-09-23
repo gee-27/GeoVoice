@@ -1,7 +1,9 @@
 import {questionImage} from './visuals.js';
 import {resolveAnswer} from './core.js';
+import {installCompactLayout} from './compact.js';
 
 const $=s=>document.querySelector(s),main=$('#content');
+installCompactLayout(main,true);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const params=new URLSearchParams(location.search);
 let roomId=params.get('room')||'',pin=params.get('pin')||'',guestToken='',session=null,state=null,timer=null,poll=null,clockOffset=0,lastView='',recognition=null,joinMode=params.has('pin')||params.get('mode')==='join';
