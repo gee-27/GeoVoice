@@ -44,10 +44,11 @@ CREATE TABLE IF NOT EXISTS live_rooms (
  id TEXT PRIMARY KEY, pin TEXT NOT NULL UNIQUE, host_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
  category TEXT NOT NULL, questions JSONB NOT NULL, team_mode BOOLEAN NOT NULL DEFAULT FALSE,
  status TEXT NOT NULL DEFAULT 'lobby' CHECK(status IN ('lobby','question','feedback','paused','finished')),
- round_index INTEGER NOT NULL DEFAULT 0, question_ms INTEGER NOT NULL,
+ round_index INTEGER NOT NULL DEFAULT 0, question_ms INTEGER NOT NULL, max_players INTEGER NOT NULL DEFAULT 30,
  deadline BIGINT, pause_remaining BIGINT, paused_stage TEXT,
  created BIGINT NOT NULL, expires BIGINT NOT NULL
 );
+ALTER TABLE live_rooms ADD COLUMN IF NOT EXISTS max_players INTEGER NOT NULL DEFAULT 30;
 CREATE INDEX IF NOT EXISTS live_rooms_host ON live_rooms(host_id,created DESC);
 CREATE TABLE IF NOT EXISTS live_players (
  id TEXT PRIMARY KEY, room_id TEXT NOT NULL REFERENCES live_rooms(id) ON DELETE CASCADE,

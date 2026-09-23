@@ -35,7 +35,7 @@ Open http://localhost:4173. No phone number or SMS provider is required.
 - One-time recovery code for password reset or inaccessible face verification.
 - Password change, face re-enrollment, recovery-code replacement, data export, account deletion, and sign-out.
 - Eighty geography questions across eight categories, randomized answers, spoken/clicked/typed input, question narration, immediate explanations, automatic progression with pause, and paginated history.
-- Live expeditions: a signed-in host creates a six-digit PIN and QR link; up to 30 guests join by nickname without accounts. The host can assign Atlas or Voyagers teams, and all players see timed rounds and live standings.
+- Live expeditions: a signed-in host sets a room limit from 1 to 30, then creates a six-digit PIN and QR link. Guests join by nickname without accounts. The host can assign Atlas or Voyagers teams, and all players see timed rounds and live standings.
 - Live scoring awards 600 points for a correct answer plus up to 400 based on remaining time. The server keeps answers private until each six-second reveal and advances the room automatically.
 - Server-owned answer keys and scoring, with duplicate submission protection.
 - PostgreSQL migrations and cleanup, Vercel function adapter, Dockerfile, health endpoint, and security headers.

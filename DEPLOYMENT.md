@@ -48,7 +48,7 @@ npm run check
 
 The migration is idempotent and uses a PostgreSQL advisory lock. Run it against the intended production database before enabling production traffic. The normal Vercel build checks source but does not silently modify your database.
 
-The live-game update adds `live_rooms`, `live_players`, and `live_answers` tables. Run the migration before deploying this version. Existing accounts and solo quiz history are retained.
+The live-game update adds `live_rooms`, `live_players`, and `live_answers` tables and a room player-limit column. Run the migration before deploying this version. Existing accounts and solo quiz history are retained.
 
 ## 4. Import the source
 
