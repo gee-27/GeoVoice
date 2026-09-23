@@ -4,7 +4,7 @@ import {buildQuiz,matchesFace,distance,score} from '../dist/core.js';
 import {questions,categories} from './questions.js';
 const minute=60000,hour=60*minute;
 const publicUser=u=>({id:u.id,username:u.username,name:u.name,created:new Date(Number(u.created)).toISOString(),hasPhoto:Boolean(u.photo_cipher),hasFace:Boolean(u.face_cipher)});
-const safeQuestion=q=>({id:q.id,category:q.category,prompt:q.prompt,options:q.options});
+const safeQuestion=q=>({id:q.id,category:q.category,prompt:q.prompt,options:q.options,...(q.difficulty?{difficulty:q.difficulty}:{})});
 const result=q=>({id:q.id,category:q.category,date:new Date(Number(q.completed)).toISOString(),duration:Math.round((Number(q.completed)-Number(q.started))/1000),answers:q.answers,...score(q.answers)});
 export const SECURITY_HEADERS={
  'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',

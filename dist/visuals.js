@@ -1,9 +1,13 @@
 // Topic-level photographs never depend on a correct answer or a specific location.
 export const topicImages={
- 'Capitals':{file:'city',alt:'A busy street between tall city buildings',label:'City life'},
- 'World geography':{file:'highlands',alt:'Clouds drifting over green highlands',label:'Across the world'},
- 'Philippines':{file:'coast',alt:'Gentle waves meeting a sandy tropical shore',label:'Island spirit'},
- 'Land & water':{file:'forest',alt:'Sunlight falling across a forest path',label:'The natural world'}
+ 'Capitals':{file:'city.jpg',alt:'A busy street between tall city buildings',label:'City life'},
+ 'World geography':{file:'highlands.jpg',alt:'Clouds drifting over green highlands',label:'Across the world'},
+ 'Philippines':{file:'coast.jpg',alt:'Gentle waves meeting a sandy tropical shore',label:'Island spirit'},
+ 'Land & water':{file:'forest.jpg',alt:'Sunlight falling across a forest path',label:'The natural world'},
+ 'Maps & navigation':{file:'map-route.svg',alt:'An illustrated folded map with an unlabeled route',label:'Find your way'},
+ 'Climate & weather':{file:'weather-sky.svg',alt:'An illustrated sky above rolling hills',label:'Sky & seasons'},
+ 'Natural landmarks':{file:'mountains.jpg',alt:'A range of mountain peaks',label:'Remarkable Earth'},
+ 'Countries & cultures':{file:'culture-language.svg',alt:'Illustrated speech bubbles without words',label:'People & places'}
 };
 export function contextImage(category){return topicImages[category]||topicImages['World geography'];}
 
@@ -25,6 +29,40 @@ export const questionImages={
  30:scene('forest.jpg','Cool highland environments','A shaded wooded path'),31:scene('dunes.jpg','Hot desert environments','Sunlit sand dunes without location markers'),
  32:mountains('Mountain ranges'),33:water('Where land meets water'),34:water('Land & water connections'),35:water('Island landscapes'),
  36:scene('river.jpg','River environments','A flowing river between wooded banks'),37:water('Oceans & continents'),38:water('Exploring ocean depths'),
- 39:scene('lake.jpg','Freshwater lakes','Still lake water reflecting surrounding slopes'),40:scene('waterfall.jpg','Waterfall environments','Falling water over a rocky ledge without location labels')
+ 39:scene('lake.jpg','Freshwater lakes','Still lake water reflecting surrounding slopes'),40:scene('waterfall.jpg','Waterfall environments','Falling water over a rocky ledge without location labels'),
+ 41:scene('map-route.svg','Reading a map','An illustrated folded map with an unlabeled route','contain'),
+ 42:scene('map-compass.svg','Orientation on maps','An illustrated map with a compass design but no direction labels','contain'),
+ 43:scene('map-route.svg','Map features','An illustrated folded map with an unlabeled route','contain'),
+ 44:scene('map-scale.svg','Maps & distance','An illustrated map and unnumbered measuring bar','contain'),
+ 45:globe('Location on Earth'),46:globe('Location on Earth'),
+ 47:scene('map-contours.svg','Terrain on maps','An illustrated terrain map with unlabeled curved lines','contain'),
+ 48:scene('map-contours.svg','Terrain on maps','An illustrated terrain map with unlabeled curved lines','contain'),
+ 49:scene('map-scale.svg','Maps & distance','An illustrated map and unnumbered measuring bar','contain'),50:globe('Travel & direction'),
+ 51:scene('weather-sky.svg','Observing the weather','An illustrated sky with sun and clouds','contain'),
+ 52:scene('weather-sky.svg','Observing the weather','An illustrated sky with sun and clouds','contain'),
+ 53:scene('weather-cloud.svg','Clouds & water','Clouds over a green landscape','contain'),
+ 54:scene('forest.jpg','Weather over time','A forest in soft daylight'),
+ 55:water('Seasonal weather'),56:scene('weather-cloud.svg','Clouds & water','Clouds over a green landscape','contain'),
+ 57:mountains('Mountain weather'),58:water('Coastal temperatures'),
+ 59:scene('weather-seasons.svg','Earth & sunlight','An illustrated globe and sun without highlighted hemispheres','contain'),
+ 60:scene('weather-seasons.svg','Earth & sunlight','An illustrated globe and sun without highlighted hemispheres','contain'),
+ 61:scene('river.jpg','Rivers & canyons','An unlabeled river flowing between wooded banks'),
+ 62:scene('waterfall.jpg','Waterfall landscapes','A waterfall without country or border markers'),
+ 63:scene('volcano.jpg','Volcanic landscapes','An erupting volcanic peak without labels'),
+ 64:scene('river.jpg','Winding rivers','An unlabeled river flowing between wooded banks'),
+ 65:scene('cave.jpg','Underground landscapes','Water inside a rocky cavern'),
+ 66:scene('river.jpg','Rivers & coastlines','An unlabeled river flowing between wooded banks'),
+ 67:mountains('Mountain valleys'),68:mountains('Glacial landscapes'),
+ 69:water('Coastal landforms'),70:scene('volcano.jpg','Volcanic islands','An erupting volcanic peak without location labels'),
+ 71:scene('culture-language.svg','Languages & places','Illustrated speech bubbles without words','contain'),
+ 72:scene('culture-dome.svg','Historic architecture','An unlabeled illustrated domed building','contain'),
+ 73:scene('culture-weave.svg','Cultural traditions','An illustrated woven pattern without text or flags','contain'),
+ 74:scene('culture-terraces.svg','Historic mountain sites','Illustrated mountain terraces without location labels','contain'),
+ 75:scene('culture-temple.svg','Historic temples','An illustrated stone temple without country labels','contain'),
+ 76:scene('culture-canyon.svg','Historic desert cities','An illustrated canyon without location labels','contain'),
+ 77:scene('culture-dance.svg','Music & dance','An illustrated dancer without regional labels','contain'),
+ 78:scene('culture-stupa.svg','Historic temples','An illustrated tiered stone shrine without location labels','contain'),
+ 79:scene('culture-steps.svg','Ancient cities','An illustrated stepped stone building without location labels','contain'),
+ 80:scene('culture-island.svg','Island heritage','An illustrated island and stone forms without country labels','contain')
 };
 export function questionImage(question){return questionImages[question.id]||globe('Geography');}

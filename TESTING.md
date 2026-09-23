@@ -28,7 +28,7 @@ The previous production npm audit reported no known installed runtime dependency
 
 ## Tropical redesign regression checks
 
-The updated interface/API workflow passes with assertions for navigation hiding/restoration, camera selection, quiz exit cancellation and confirmation, question imagery, results, account changes, recovery, and deletion. An additional image check verifies all forty questions map to bundled JPEG assets under 500 KB each. Source syntax checks pass.
+The updated interface/API workflow passes with assertions for navigation hiding/restoration, camera selection, quiz exit cancellation and confirmation, question imagery, results, account changes, recovery, and deletion. An additional image check verifies that every question maps to a bundled photo, flag, or original SVG illustration. Source syntax checks pass.
 
 Real-browser review used an isolated in-memory preview account, not the production database. Desktop and 390-pixel mobile views were inspected for home, sign-in, focused quiz, and camera enrollment. Home and quiz had no horizontal overflow; quiz navigation was absent from the accessibility tree. Camera/model behavior remains covered with synthetic test outputs; this review did not collect a live face image.
 
@@ -38,4 +38,4 @@ Eight core tests and the updated interface/API workflow passed. New checks cover
 
 ## Profile-photo and question-context revision
 
-Targeted checks cover JPEG size/type/consent validation, encrypted photo storage, authorization before and after face verification, cross-account isolation, CSRF-protected removal, capture on sign-in, account deletion, and existing-database migration. The interface test exercises synthetic photo capture and profile rendering. Deterministic clock tests verify the countdown completes once at five seconds and cannot navigate after cancellation. All forty question image assignments resolve to local assets and remain unchanged when correct-answer metadata changes. No real user face was captured during testing.
+Targeted checks cover JPEG size/type/consent validation, encrypted photo storage, authorization before and after face verification, cross-account isolation, CSRF-protected removal, capture on sign-in, account deletion, and existing-database migration. The interface test exercises synthetic photo capture and profile rendering. Deterministic clock tests verify the countdown completes once at five seconds and cannot navigate after cancellation. All eighty question image assignments resolve to local assets and remain unchanged when correct-answer metadata changes. No real user face was captured during testing.

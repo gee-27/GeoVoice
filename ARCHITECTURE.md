@@ -47,7 +47,7 @@ Foreign keys cascade on account deletion. Schema creation is transactional and i
 
 Face descriptors originate in the browser. A hostile client can fabricate or replay them; this implementation does not have certified liveness or presentation-attack detection. Face verification is therefore not claimed as an independent strong security factor. Passwords remain mandatory for ordinary sign-in. This app does not claim phishing-resistant authentication.
 
-The initial face threshold (0.48) must be evaluated with representative users and devices. Voice accuracy depends on the browser service, language/accent, and environment. Forty questions are suitable for the current educational scope; adding more content requires editing the server question bank and deploying it.
+The initial face threshold (0.48) must be evaluated with representative users and devices. Voice accuracy depends on the browser service, language/accent, and environment. Eighty questions span eight topics; further additions require editing the server question bank and deploying it.
 
 Existing local IndexedDB records are neither uploaded nor deleted. Consent must be obtained for the new online account. Backups can retain deleted records until provider retention ends; the operator must choose and explain that policy.
 

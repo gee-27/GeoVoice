@@ -87,7 +87,7 @@ Third-party face-api.js 0.22.2 and model assets are included. Its MIT license is
 
 ## Tropical explorer interface
 
-The interface uses ocean blue, coral, lime, and sunshine colors across sign-in, enrollment, home, quizzes, history, profile, and dialogs. Topic tiles select a quiz category. All forty questions have explicit subject-image assignments, independent of their correct answers. Country flags provide context for capital questions; physical-geography questions use corresponding landscape scenes or a neutral globe. See PHOTO-CREDITS.md for sources and the no-answer-clue policy.
+The interface uses ocean blue, coral, lime, and sunshine colors across sign-in, enrollment, home, quizzes, history, profile, and dialogs. Topic tiles select a quiz category. All eighty questions have explicit subject-image assignments, independent of their correct answers. Country flags provide context for capital questions; physical-geography questions use corresponding landscape scenes or a neutral globe. See PHOTO-CREDITS.md for sources and the no-answer-clue policy.
 
 Camera enrollment and verification use a focused screen with navigation hidden, webcam controls, and back actions. Active quizzes hide the sidebar, profile control, and footer, retain voice/type/click answers and progress, and confirm before quitting to home. Answer cards use letters and shapes as well as color, with explicit correctness labels after submission. Reduced-motion preferences and mobile layouts are supported.
 
@@ -101,3 +101,8 @@ Run `npm run db:migrate` before deploying this update. The additive `photo_ciphe
 ## Face recognition switch
 
 Set `FACE_RECOGNITION_ENABLED=1` in your deployment environment to require face verification at sign-in (default). Set it to `0` to use username and password only. For local development, set the variable in your ignored `.env` file and restart the server. Redeploy after changing it in Vercel. When disabled, new accounts do not enroll or store a face template; existing templates stay encrypted in the database. Users without a template can still sign in when recognition is enabled and enroll one under **My profile → Enroll face template**. Users with an existing template will be prompted for face verification when the feature is enabled.
+
+
+## Expanded geography question bank
+
+GeoVoice now has 80 questions across eight categories. The four new categories are Maps & navigation, Climate & weather, Natural landmarks, and Countries & cultures. Each contains three easy, four medium, and three hard questions. Every question has an explicit local image assignment in `dist/visuals.js`; the 17 new SVG illustrations use no answer text or location labels. Edit questions and explanations in `backend/questions.js`, and consult `QUESTION-SOURCES.md` for primary references.

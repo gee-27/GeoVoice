@@ -31,3 +31,6 @@ Pexels photographs, used under https://www.pexels.com/license/:
 | volcano.jpg | https://www.pexels.com/photo/volcano-in-eruption-20753804/ |
 
 Country flag PNGs are sourced from https://flagcdn.com/w640/{country-code}.png (jp, au, ca, br, eg, nz, th, ke, it, ar, ph). Flagcdn supplies free country flag images; see https://flagcdn.com/. globe.svg is original GeoVoice vector artwork. All assets are bundled locally; players make no requests to these image providers.
+
+
+The 17 map, weather, and culture SVG illustrations added for questions 41–80 are original GeoVoice artwork. New natural-landmark questions reuse bundled generic photographs credited above. Illustrations show the subject without country labels or answer text.
