@@ -7,7 +7,7 @@ export const token=()=>randomBytes(32).toString('base64url');
 export const digest=value=>createHash('sha256').update(value).digest('hex');
 export class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 export function requireThat(value,status,message){if(!value)throw new HttpError(status,message);}
-export function validatePassword(value){requireThat(typeof value==='string'&&value.length>=15&&value.length<=128,400,'Use a password between 15 and 128 characters.');return value;}
+export function validatePassword(value){requireThat(typeof value==='string'&&value.length>=8&&value.length<=128,400,'Use a password between 8 and 128 characters.');return value;}
 export function username(value){requireThat(typeof value==='string'&&/^[a-zA-Z0-9_]{3,32}$/.test(value),400,'Use 3–32 letters, numbers, or underscores for your username.');return value.toLowerCase();}
 export function displayName(value){requireThat(typeof value==='string'&&value.trim().length>=1&&value.trim().length<=60,400,'Enter a name between 1 and 60 characters.');return value.trim();}
 async function derive(password,salt){requireThat(activeHashes<2,503,'Sign-in is busy. Please try again shortly.');activeHashes++;try{return await scrypt(password,salt,64,params);}finally{activeHashes--;}}
