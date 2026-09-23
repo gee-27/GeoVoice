@@ -116,3 +116,5 @@ The Docker image and cloud deployment must be verified in your hosting account; 
 ## Upgrading an existing database
 
 Keep the original FACE_ENCRYPTION_KEY and back up the database before migration. Run `npm run db:migrate` before deploying this version. It removes obsolete phone/verification columns and expires existing sessions once; accounts and quiz history remain. Repeating the migration does not sign users out again. Remove TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID, and SMS_DAILY_LIMIT from Vercel if previously added. No SMS service is required.
+
+The profile-photo update requires another idempotent `npm run db:migrate` before deployment to add `users.photo_cipher`. It preserves existing data and the current schema-version compatibility.

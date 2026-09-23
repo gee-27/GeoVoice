@@ -17,3 +17,8 @@ h1,h2,h3,.brand,.score-number{font-family:'Trebuchet MS','Segoe UI',sans-serif}h
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 .voice-panel label{color:#e4f6ed;text-align:left}.voice-panel select{font-size:13px}.voice-panel #speech-suggestions:empty{display:none}@media(max-width:900px){.voice-panel label,.voice-panel select,.voice-panel #speech-suggestions{grid-column:2}}
+
+#quiz-form .button.primary{background:#197348;border-color:#125c39;box-shadow:0 4px 0 #0c4c2d}#quiz-form .button.primary:hover{background:#125d39}
+.profile-heading{display:flex;align-items:center;gap:20px;margin-bottom:22px}.profile-avatar{width:96px;height:96px;flex-shrink:0;border-radius:50%;background:#d7f296;color:#26533d;border:4px solid #c3dd79;display:grid;place-items:center;font-size:36px;font-weight:800;overflow:hidden}.profile-avatar img,.account img{width:100%;height:100%;object-fit:cover;display:block}.account{overflow:hidden;padding:0}.profile-heading h2{overflow-wrap:anywhere}.advance-status{flex:1;min-width:160px}.advance-track{height:9px;border-radius:20px;background:#d3e5d9;overflow:hidden;margin-top:9px}.advance-track span{display:block;width:100%;height:100%;background:linear-gradient(90deg,#197348,#64b72e);transform-origin:left;transition:transform .06s linear}.advance-track.paused span{background:#879b91;transition:none}.context-photo.contain img{object-fit:contain;padding:14px;background:#edf4ee}.photo-consent{color:var(--muted)}@media(max-width:680px){.profile-avatar{width:76px;height:76px}.profile-heading{gap:14px}.advance-status{width:100%}.context-photo.contain img{height:155px}}
+
+@media(prefers-reduced-motion:reduce){.advance-track{display:none}}

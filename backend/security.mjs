@@ -19,3 +19,14 @@ export function encryptFace(samples,key,userId){const iv=randomBytes(12),cipher=
 export function decryptFace(value,key,userId){const [iv,tag,data]=value.split('.').map(s=>Buffer.from(s,'base64'));const decipher=createDecipheriv('aes-256-gcm',key,iv);decipher.setAAD(Buffer.from(userId));decipher.setAuthTag(tag);return JSON.parse(Buffer.concat([decipher.update(data),decipher.final()]).toString('utf8'));}
 export function recoveryCode(){return randomBytes(24).toString('hex').match(/.{1,8}/g).join('-');}
 export const recoveryHash=code=>digest(String(code).replace(/[-\s]/g,'').toLowerCase());
+
+export function validatePhoto(photo,consent){
+ if(photo===undefined)return null;
+ requireThat(consent===true,400,'Agree to save your profile photo.');
+ requireThat(typeof photo==='string'&&photo.length<=90000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(photo),400,'Invalid profile photo. Capture it again.');
+ const bytes=Buffer.from(photo.split(',')[1],'base64');
+ requireThat(bytes.length<=65536&&bytes[0]===255&&bytes[1]===216&&bytes.at(-2)===255&&bytes.at(-1)===217,400,'Invalid JPEG photo.');
+ let offset=2,valid=false;
+ while(offset+8<bytes.length){if(bytes[offset]!==255)break;const marker=bytes[offset+1];if(marker===218||marker===217)break;const size=bytes.readUInt16BE(offset+2);if(size<2||offset+2+size>bytes.length)break;if([192,193,194].includes(marker)){const h=bytes.readUInt16BE(offset+5),w=bytes.readUInt16BE(offset+7);valid=w>0&&h>0&&w<=320&&h<=320;break;}offset+=size+2;}
+ requireThat(valid,400,'Profile photo must be a small JPEG capture.');return photo;
+}

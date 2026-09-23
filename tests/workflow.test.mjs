@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {parseHTML} from 'linkedom';
 import {testApp,password} from './helpers.mjs';
+import {testPhoto} from './photo-fixture.mjs';
 const backend=await testApp();
 const {document,window}=parseHTML(await readFile(new URL('../dist/index.html',import.meta.url),'utf8'));
 Object.assign(globalThis,{document,window});
+const originalCreate=document.createElement.bind(document);document.createElement=(tag,...args)=>{const el=originalCreate(tag,...args);if(tag==='canvas'){el.getContext=()=>({translate(){},scale(){},drawImage(){}});el.toDataURL=()=>testPhoto;}return el;};
 let stops=0,device='main-camera',speechInstance;
 const preferences=new Map();globalThis.localStorage={getItem:k=>preferences.get(k)||null,setItem:(k,v)=>preferences.set(k,v)};
 const track={stop(){stops++;},getSettings(){return {deviceId:device};}};
 Object.defineProperty(globalThis,'navigator',{value:{mediaDevices:{async getUserMedia(constraints){if(constraints.video.deviceId)device=constraints.video.deviceId.exact;return {getTracks:()=>[track],getVideoTracks:()=>[track]};},async enumerateDevices(){return [{kind:'videoinput',deviceId:'main-camera',label:'Main webcam'},{kind:'videoinput',deviceId:'virtual-camera',label:'Virtual camera'}];}}},configurable:true});
-window.HTMLElement.prototype.play=async()=>{};window.HTMLElement.prototype.showModal=function(){this.open=true;};window.HTMLElement.prototype.close=function(){this.open=false;};window.speechSynthesis={cancel(){}};
+Object.defineProperties(window.HTMLElement.prototype,{videoWidth:{get:()=>640,configurable:true},videoHeight:{get:()=>480,configurable:true}});window.HTMLElement.prototype.play=async()=>{};window.HTMLElement.prototype.showModal=function(){this.open=true;};window.HTMLElement.prototype.close=function(){this.open=false;};window.speechSynthesis={cancel(){}};
 class SpeechMock{constructor(){speechInstance=this;}start(){}abort(){}say(text){return this.onresult?.({resultIndex:0,results:[Object.assign([{transcript:text}],{isFinal:true})]});}}
 window.SpeechRecognition=SpeechMock;
 globalThis.faceapi={nets:Object.fromEntries(['tinyFaceDetector','faceLandmark68Net','faceRecognitionNet'].map(n=>[n,{async loadFromUri(){}}])),TinyFaceDetectorOptions:class{},detectAllFaces(){return {withFaceLandmarks(){return {async withFaceDescriptors(){return [{descriptor:new Float32Array(128).fill(.1),detection:{box:{width:180,height:220}}}];}};}};}};window.faceapi=globalThis.faceapi;
@@ -24,19 +26,19 @@ test('browser UI connected to real API: enrollment, camera selection, quiz, sett
  act('#register-tab');value('#name','UI Explorer');value('#username','ui_explorer');value('#password',password);value('#confirm-password',password);$('#consent').checked=true;await submit('#auth-form');await wait();
  assert.ok($('#camera-select'));assert.equal($('.sidebar').hidden,true);assert.equal($('.topbar').hidden,true);assert.equal($('footer').hidden,true);value('#camera-select','main-camera');await act('#camera-enable');assert.equal(preferences.get('geovoice-camera'),'main-camera');assert.match($('#camera-message').textContent,/Ready/);
  value('#camera-select','virtual-camera');await $('#camera-select').onchange();assert.equal(device,'virtual-camera');
- await act('#capture');assert.ok(stops>=2);assert.equal($('#phone'),null);assert.equal((await client.request('/history')).status,200);
+ Object.defineProperties($('#video'),{videoWidth:{value:640},videoHeight:{value:480}});$('#save-photo').checked=true;await act('#capture');assert.ok(stops>=2);assert.equal($('#phone'),null);assert.equal((await client.request('/history')).status,200);
  assert.match($('dialog').textContent,/Identity confirmed/);act('#identity-continue');const recovery=$('.recovery-code').textContent;assert.ok(recovery);$('#saved-code').checked=true;$('#saved-code').onchange();act('#recovery-done');
  assert.equal($('.sidebar').hidden,false);value('#category','All');value('#count','5');await submit('#quiz-form');assert.match($('main').textContent,/Question 1 of 5/);assert.equal($('.sidebar').hidden,true);assert.ok($('.context-photo img').getAttribute('src').startsWith('./images/'));act('#exit');act('#dialog-cancel');assert.equal($('.sidebar').hidden,true);
  value('#typed','not a valid answer');await submit('#typed-form');assert.equal($('#feedback').textContent,'');
  await act('#listen');assert.equal(speechInstance.interimResults,true);assert.equal(speechInstance.maxAlternatives,5);
  await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'option A'}],{isFinal:false})]});assert.match($('#speech-message').textContent,/Hearing/);assert.ok($('#speech-submit-now'));assert.equal($('#feedback').textContent,'');
- await speechInstance.say('my answer is letter A');assert.ok($('#next'));act('#hold');act('#next');
+ await speechInstance.say('my answer is letter A');assert.ok($('#next'));act('#hold');assert.ok($('#advance-track').classList.contains('paused'));act('#next');
  value('#speech-language','en-PH');$('#speech-language').onchange();await act('#listen');assert.equal(speechInstance.lang,'en-PH');
- await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'unrecognized noise'},{transcript:'option A'}],{isFinal:true})]});assert.equal($('#feedback').textContent,'');assert.ok($('[data-speech-choice="0"]'));await act('[data-speech-choice="0"]');act('#hold');act('#next');
- await act('#listen');await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'option A'}],{isFinal:false})]});await act('#speech-submit-now');act('#hold');act('#next');
- for(let i=3;i<5;i++){await act('[data-answer="0"]');act('#hold');act('#next');}
+ await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'unrecognized noise'},{transcript:'option A'}],{isFinal:true})]});assert.equal($('#feedback').textContent,'');assert.ok($('[data-speech-choice="0"]'));await act('[data-speech-choice="0"]');act('#hold');assert.ok($('#advance-track').classList.contains('paused'));act('#next');
+ await act('#listen');await speechInstance.onresult({resultIndex:0,results:[Object.assign([{transcript:'option A'}],{isFinal:false})]});await act('#speech-submit-now');act('#hold');assert.ok($('#advance-track').classList.contains('paused'));act('#next');
+ for(let i=3;i<5;i++){await act('[data-answer="0"]');act('#hold');assert.ok($('#advance-track').classList.contains('paused'));act('#next');}
  assert.match($('main').textContent,/saved to your account/);assert.equal($('.sidebar').hidden,false);await act('#progress-link');assert.match($('main').textContent,/Recent quizzes/);
- act('[data-nav="settings"]');act('#change-password');value('#current-password',password);const newPassword='Another long UI account password!';value('#new-password',newPassword);value('#confirm-new',newPassword);await submit('#password-form');assert.equal($('dialog'),null);
+ act('[data-nav="settings"]');await wait();assert.equal($('.profile-avatar img').getAttribute('src'),testPhoto);act('#change-password');value('#current-password',password);const newPassword='Another long UI account password!';value('#new-password',newPassword);value('#confirm-new',newPassword);await submit('#password-form');assert.equal($('dialog'),null);
  await act('#sign-out');value('#username','ui_explorer');value('#password',newPassword);await submit('#auth-form');await act('#camera-enable');await act('#capture');act('#identity-continue');
  act('[data-nav="settings"]');act('#reenroll-face');value('#current-password',newPassword);await submit('#password-form');await act('#camera-enable');await act('#capture');assert.match($('main').textContent,/Make yourself at home/);
  await act('#sign-out');$('#recover-link').click();value('#username','ui_explorer');value('#recovery',recovery);value('#password','Recovered long UI account password!');value('#confirm-password','Recovered long UI account password!');await submit('#auth-form');assert.match($('dialog').textContent,/Identity confirmed/);act('#identity-continue');assert.notEqual($('.recovery-code').textContent,recovery);$('#saved-code').checked=true;$('#saved-code').onchange();act('#recovery-done');act('[data-nav="settings"]');

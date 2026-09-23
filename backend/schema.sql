@@ -33,3 +33,6 @@ ALTER TABLE sessions DROP COLUMN IF EXISTS failures;
 ALTER TABLE sessions DROP CONSTRAINT IF EXISTS sessions_stage_check;
 ALTER TABLE sessions ADD CONSTRAINT sessions_stage_check CHECK(stage IN ('face','full'));
 UPDATE metadata SET value='2' WHERE key='schema_version';
+
+-- Additive profile-photo migration; existing sessions and accounts are retained.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_cipher TEXT;

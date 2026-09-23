@@ -87,6 +87,12 @@ Third-party face-api.js 0.22.2 and model assets are included. Its MIT license is
 
 ## Tropical explorer interface
 
-The interface uses ocean blue, coral, lime, and sunshine colors across sign-in, enrollment, home, quizzes, history, profile, and dialogs. Topic tiles select a quiz category. Question photos are shared at category level, independent of the answer: four bundled scenes cover all forty questions. See PHOTO-CREDITS.md for sources and the no-answer-clue policy.
+The interface uses ocean blue, coral, lime, and sunshine colors across sign-in, enrollment, home, quizzes, history, profile, and dialogs. Topic tiles select a quiz category. All forty questions have explicit subject-image assignments, independent of their correct answers. Country flags provide context for capital questions; physical-geography questions use corresponding landscape scenes or a neutral globe. See PHOTO-CREDITS.md for sources and the no-answer-clue policy.
 
 Camera enrollment and verification use a focused screen with navigation hidden, webcam controls, and back actions. Active quizzes hide the sidebar, profile control, and footer, retain voice/type/click answers and progress, and confirm before quitting to home. Answer cards use letters and shapes as well as color, with explicit correctness labels after submission. Reduced-motion preferences and mobile layouts are supported.
+
+## Profile snapshots and animated countdown
+
+Select **Save this capture as my profile photo** on the camera screen to save a 256-pixel square JPEG while enrolling or successfully verifying your face. Existing accounts can do this on their next sign-in, or under My profile → Update face template. Photos are optional, encrypted in PostgreSQL, available only to the fully signed-in owner, and removable independently of the face template. The profile pane and header show the saved photo; accounts without one keep their initial.
+
+Run `npm run db:migrate` before deploying this update. The additive `photo_cipher` column retains schema version 2 for compatibility with the currently running version, preserves accounts and history, and does not expire sessions. Keep the existing encryption key. The five-second feedback countdown shows changing seconds and a shrinking bar; Pause, navigation, quit confirmation, and tab hiding cancel advancement. Reduced-motion mode displays the numeric countdown without the moving bar.

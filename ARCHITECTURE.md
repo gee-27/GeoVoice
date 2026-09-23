@@ -23,7 +23,7 @@ No client-provided role, score, user ID, or face-success flag grants access.
 
 ## Persistent records
 
-- `users`: username, name, salted password hash, authenticated encrypted face data, hashed recovery code, consent record, authentication version.
+- `users`: username, name, salted password hash, authenticated encrypted face data and optional profile snapshot, hashed recovery code, consent record, authentication version.
 - `sessions`: hash of random cookie token, random CSRF token, account ID, authentication stage and timestamps.
 - `quizzes`: account ID, server-generated question/answer order, submitted answers, timestamps, completion status.
 - `rate_limits`: hashed/keyed subjects, counts, reset timestamps; durable across function invocations.
@@ -79,3 +79,7 @@ References:
 - https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 - https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
 - https://vercel.com/docs/functions/runtimes/node-js/node-js-versions
+
+## Profile-photo storage
+
+Camera consent is explicit and separate from face-template consent. The browser crops and encodes a 256×256 JPEG. The API bounds request bodies to 128 KiB and photo data to 64 KiB decoded, validates JPEG framing/dimensions (maximum 320×320), and encrypts with AES-GCM using account-specific `:photo` associated data. Registration, successful face sign-in, and password-confirmed re-enrollment can save a photo. Failed face checks cannot replace it. GET /api/account/photo returns only the current fully authenticated owner's data URI, with no-store caching. DELETE requires a full session and CSRF verification. Account deletion removes the photo with its user record. No public avatar URL or user-ID lookup exists.

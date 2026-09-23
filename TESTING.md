@@ -35,3 +35,7 @@ Real-browser review used an isolated in-memory preview account, not the producti
 ## Speech response revision
 
 Eight core tests and the updated interface/API workflow passed. New checks cover natural answer phrasing, consistent letter-plus-name answers, spacing and Mt/Mount normalization, rejection of negation and conflicting choices, interim transcripts without automatic submission, final speech submission, explicit confirmation of alternative transcriptions, changing speech language, and submitting a matched interim result immediately. Interim output never determines correctness; the server still grades each submitted choice. Speech callbacks are simulated: real microphone, accent, provider accuracy, and end-to-end production latency were not measured.
+
+## Profile-photo and question-context revision
+
+Targeted checks cover JPEG size/type/consent validation, encrypted photo storage, authorization before and after face verification, cross-account isolation, CSRF-protected removal, capture on sign-in, account deletion, and existing-database migration. The interface test exercises synthetic photo capture and profile rendering. Deterministic clock tests verify the countdown completes once at five seconds and cannot navigate after cancellation. All forty question image assignments resolve to local assets and remain unchanged when correct-answer metadata changes. No real user face was captured during testing.
