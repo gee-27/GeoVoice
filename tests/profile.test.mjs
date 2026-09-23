@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {testApp,registration,password,samples,enroll} from './helpers.mjs';
+import {testApp,registration,password,enroll} from './helpers.mjs';
 import {testPhoto} from './photo-fixture.mjs';
 import {validatePhoto} from '../backend/security.mjs';
 import {startCountdown} from '../dist/countdown.js';
@@ -14,12 +14,9 @@ test('private profile photos are encrypted, require full sign-in, and can be rem
  assert.equal((await a.request('/account/photo')).status,401);
  const r=await a.request('/auth/register','POST',{...registration('photo_user'),photo:testPhoto,photoConsent:true});assert.equal(r.status,201);assert.equal(r.data.user.hasPhoto,true);
  const row=(await app.db.query('SELECT photo_cipher FROM users WHERE id=$1',[r.data.user.id])).rows[0];assert.ok(row.photo_cipher&&!row.photo_cipher.includes(testPhoto));
- assert.equal((await a.request('/account/photo')).data.photo,testPhoto);await enroll(b,'other_user');assert.equal((await b.request('/account/photo?userId='+r.data.user.id)).status,404);
- await a.request('/auth/logout','POST',{});await a.request('/auth/login','POST',{username:'photo_user',password});assert.equal((await a.request('/account/photo')).status,401);
- assert.equal((await a.request('/auth/face','POST',{samples:samples(.9,2),photo:testPhoto,photoConsent:true})).status,401);
- await a.request('/auth/face','POST',{samples:samples(.1,2)});assert.equal((await a.request('/account/photo')).data.photo,testPhoto);
+ assert.equal((await a.request('/account/photo')).data.photo,testPhoto);await enroll(b,'other_user');const ownPhoto=await b.request('/account/photo?userId='+r.data.user.id);assert.equal(ownPhoto.status,200);assert.equal(ownPhoto.data.photo,testPhoto);
+ await a.request('/auth/logout','POST',{});const login=await a.request('/auth/login','POST',{username:'photo_user',password});assert.equal(login.data.stage,'full');assert.equal((await a.request('/account/photo')).data.photo,testPhoto);
  assert.equal((await a.request('/account/photo','DELETE',{}, {'x-csrf-token':'wrong'})).status,403);assert.equal((await a.request('/account/photo','DELETE',{})).status,200);assert.equal((await a.request('/account/photo')).status,404);
- await a.request('/auth/logout','POST',{});await a.request('/auth/login','POST',{username:'photo_user',password});const replaced=await a.request('/auth/face','POST',{samples:samples(.1,2),photo:testPhoto,photoConsent:true});assert.equal(replaced.data.user.hasPhoto,true);
  await a.request('/account','DELETE',{password});assert.equal((await app.db.query('SELECT id FROM users WHERE id=$1',[r.data.user.id])).rows.length,0);
 });
 test('five-second countdown tracks elapsed time and completes exactly once',()=>{

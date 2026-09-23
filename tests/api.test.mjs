@@ -6,15 +6,16 @@ import {decryptFace,encryptFace} from '../backend/security.mjs';
 import {randomBytes} from 'node:crypto';
 test('public backend security and account workflows',async t=>{
  const app=await testApp();t.after(()=>app.db.close());const alice=app.client(),bob=app.client('127.0.0.2');let account,recovery,quizId;
- await t.test('registration requires consent and face enrollment, then signs in without a phone',async()=>{
+ await t.test('registration requires one visible face capture and saves its profile photo',async()=>{
   assert.equal((await alice.request('/auth/register','POST',{...registration('alice'),consent:false})).status,400);
   assert.equal((await alice.request('/auth/register','POST',{...registration('alice'),samples:[]})).status,400);
-  const r=await alice.request('/auth/register','POST',registration('alice'));assert.equal(r.status,201);assert.equal(r.data.stage,'full');account=r.data.user;recovery=r.data.recoveryCode;assert.ok(recovery);assert.equal((await alice.request('/history')).status,200);
+  assert.equal((await alice.request('/auth/register','POST',{...registration('alice'),photo:undefined})).status,400);
+  const r=await alice.request('/auth/register','POST',registration('alice'));assert.equal(r.status,201);assert.equal(r.data.stage,'full');assert.equal(r.data.user.hasPhoto,true);account=r.data.user;recovery=r.data.recoveryCode;assert.ok(recovery);assert.equal((await alice.request('/history')).status,200);
   assert.equal((await alice.request('/auth/otp/send','POST',{})).status,404);
  });
  await t.test('credentials and biometric templates are protected at rest and in responses',async()=>{
   const u=(await app.db.query('SELECT * FROM users WHERE id=$1',[account.id])).rows[0];assert.ok(u.password_hash.startsWith('scrypt$'));assert.ok(!u.face_cipher.includes('[0.1'));assert.ok(!Object.hasOwn(u,'phone_cipher'));assert.notEqual(u.recovery_hash,recovery);
-  assert.deepEqual(decryptFace(u.face_cipher,app.config.key,u.id),samples());assert.throws(()=>decryptFace(u.face_cipher,app.config.key,'wrong-user'));const exportData=(await alice.request('/account/export')).data;assert.ok(!JSON.stringify(exportData).includes('cipher'));assert.ok(!JSON.stringify(exportData).includes('password'));
+  assert.deepEqual(decryptFace(u.face_cipher,app.config.key,u.id),samples(.1,1));assert.throws(()=>decryptFace(u.face_cipher,app.config.key,'wrong-user'));const exportData=(await alice.request('/account/export')).data;assert.ok(!JSON.stringify(exportData).includes('cipher'));assert.ok(!JSON.stringify(exportData).includes('password'));
  });
  await t.test('same-origin and CSRF protections reject cross-site writes',async()=>{
   assert.equal((await alice.request('/quizzes','POST',{category:'All',count:5},{origin:'https://evil.invalid'})).status,403);
@@ -33,11 +34,10 @@ test('public backend security and account workflows',async t=>{
  await t.test('persistent sessions survive application restart; logout revokes token',async()=>{
   await app.restart();assert.equal((await alice.request('/session')).data.stage,'full');const stolen=alice.cookie;await alice.request('/auth/logout','POST',{});assert.equal((await alice.request('/session','GET',undefined,{cookie:stolen})).data.stage,'anonymous');
  });
- await t.test('password and face must both pass for returning sign-in',async()=>{
+ await t.test('returning sign-in uses username and password without another face capture',async()=>{
   assert.equal((await alice.request('/auth/login','POST',{username:'alice',password:'wrong'})).status,401);
-  assert.equal((await alice.request('/auth/login','POST',{username:'alice',password})).data.stage,'face');assert.equal((await alice.request('/history')).status,401);
-  assert.equal((await alice.request('/auth/face','POST',{samples:samples(.9,2)})).status,401);assert.equal((await alice.request('/history')).status,401);
-  assert.equal((await alice.request('/auth/face','POST',{samples:samples(.1,2)})).data.stage,'full');assert.equal((await alice.request('/history')).status,200);
+  assert.equal((await alice.request('/auth/login','POST',{username:'alice',password})).data.stage,'full');assert.equal((await alice.request('/history')).status,200);
+  assert.equal((await alice.request('/auth/face','POST',{samples:samples(.1,2)})).status,404);
  });
  await t.test('ten accounts can share a face and have separate IDs',async()=>{
   const ids=new Set();for(let i=0;i<10;i++){const client=app.client('test-register-'+i);const r=await client.request('/auth/register','POST',registration('shared_'+i));assert.equal(r.status,201);ids.add(r.data.user.id);}assert.equal(ids.size,10);
@@ -54,9 +54,9 @@ test('public backend security and account workflows',async t=>{
   assert.equal((await app.db.query('SELECT * FROM sessions WHERE user_id=$1',[account.id])).rows.length,0);
   assert.equal((await bob.request('/history')).status,200);
  });
- await t.test('pending face sessions and idle full sessions expire',async()=>{
+ await t.test('idle full sessions expire',async()=>{
   const c=app.client('expiry-test');await enroll(c,'expiry_test');await c.request('/auth/logout','POST',{});await c.request('/auth/login','POST',{username:'expiry_test',password});
-  app.advance(11*60000);assert.equal((await c.request('/session')).data.stage,'anonymous');app.advance(31*60000);assert.equal((await bob.request('/history')).status,401);
+  app.advance(31*60000);assert.equal((await c.request('/session')).data.stage,'anonymous');assert.equal((await bob.request('/history')).status,401);
  });
  await t.test('expired pending registrations are removed',async()=>{app.advance(25*60*60000);const {createApi}=await import('../backend/api.mjs');const maintenance=createApi({db:app.db,config:app.config,now:()=>Date.now()+48*60*60000});await maintenance.cleanExpired();assert.equal((await app.db.query('SELECT * FROM users WHERE verified=FALSE')).rows.length,0);});
 });

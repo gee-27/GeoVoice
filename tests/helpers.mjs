@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {randomBytes} from 'node:crypto';
 import {Readable} from 'node:stream';
 import {createApi} from '../backend/api.mjs';
+import {testPhoto} from './photo-fixture.mjs';
 export async function testApp(){const engine=new PGlite();const wrap=c=>({query:(sql,values=[])=>values.length===0&&sql.includes(';')?c.exec(sql).then(r=>r.at(-1)||{rows:[]}):c.query(sql,values)});const db={...wrap(engine),transaction:fn=>engine.transaction(tx=>fn(wrap(tx))),close:()=>engine.close()};await engine.exec(await readFile(new URL('../backend/schema.sql',import.meta.url),'utf8'));
  let time=Date.now();
  const config={production:false,origin:'http://localhost:4173',key:randomBytes(32),operator:'Test operator',privacyContact:'privacy@example.test',trustProxy:false,registration:true,faceRecognition:true};
@@ -12,5 +13,5 @@ export async function testApp(){const engine=new PGlite();const wrap=c=>({query:
 }
 export const samples=(value=.1,count=3)=>Array.from({length:count},()=>Array(128).fill(value));
 export const password='A long unique test passphrase!';
-export function registration(name='explorer',value=.1){return {username:name,name:'Explorer '+name,password,samples:samples(value),consent:true,consentVersion:'2026-09-22'};}
+export function registration(name='explorer',value=.1){return {username:name,name:'Explorer '+name,password,samples:samples(value,1),consent:true,consentVersion:'2026-09-22',photo:testPhoto,photoConsent:true};}
 export async function enroll(client,name='explorer',value=.1){const registrationResult=await client.request('/auth/register','POST',registration(name,value));if(registrationResult.status!==201)throw new Error(JSON.stringify(registrationResult));return registrationResult.data;}

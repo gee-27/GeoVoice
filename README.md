@@ -2,7 +2,7 @@
 
 A geography quiz application for solo and live group play.
 
-GeoVoice is a geography quiz application with username/password sign-in and face verification. The same face may be used for multiple uniquely named accounts. Account data and quiz results are stored in PostgreSQL and work across devices.
+GeoVoice is a geography quiz application with username/password sign-in and a one-time face capture for new-account registration. The captured image becomes the user's profile photo. Account data and quiz results are stored in PostgreSQL and work across devices.
 
 ## Start here
 
@@ -32,7 +32,7 @@ Open http://localhost:4173. No phone number or SMS provider is required.
 - Explicit camera selection, remembered as a device preference; camera stops after capture.
 - Identity-confirmed notification after all sign-in steps complete.
 - Ten or more accounts can use the same face; each account keeps independent results.
-- One-time recovery code for password reset or inaccessible face verification.
+- One-time recovery code for password reset.
 - Password change, face re-enrollment, recovery-code replacement, data export, account deletion, and sign-out.
 - Eighty geography questions across eight categories, randomized answers, spoken/clicked/typed input, question narration, immediate explanations, automatic progression with pause, and paginated history.
 - Live expeditions: a signed-in host sets a room limit from 1 to 30, then creates a six-digit PIN and QR link. Guests join by nickname without accounts. The host can assign Atlas or Voyagers teams, and all players see timed rounds and live standings.
@@ -43,9 +43,9 @@ Open http://localhost:4173. No phone number or SMS provider is required.
 
 ## Sign-in and recovery
 
-Registration collects username, display name, password, consent, and three consistent face samples. Successful enrollment signs the user in and displays a one-time recovery code. Returning sign-in requires password and face verification.
+When face registration is enabled, registration collects a username, display name, password, consent, one clear face sample, and a small profile photo captured from the same camera frame. Successful registration signs the user in and displays a one-time recovery code. Returning sign-in uses the username and password only; the camera is not requested again.
 
-Store the recovery code privately: it can replace both ordinary sign-in checks when resetting a forgotten password or recovering access without a working camera. Recovery consumes the old code, issues a replacement, and revokes other sessions. There is no self-service recovery without this code. Signed-in users can replace their face template using their current password.
+Store the recovery code privately: it can reset a forgotten password. Recovery consumes the old code, issues a replacement, and revokes other sessions. There is no self-service recovery without this code.
 
 ## Upgrade from the SMS version
 
@@ -95,14 +95,14 @@ Camera enrollment and verification use a focused screen with navigation hidden, 
 
 ## Profile snapshots and animated countdown
 
-Select **Save this capture as my profile photo** on the camera screen to save a 256-pixel square JPEG while enrolling or successfully verifying your face. Existing accounts can do this on their next sign-in, or under My profile → Update face template. Photos are optional, encrypted in PostgreSQL, available only to the fully signed-in owner, and removable independently of the face template. The profile pane and header show the saved photo; accounts without one keep their initial.
+During new-account registration, GeoVoice confirms that exactly one clear face is visible and saves a 256-pixel square JPEG from that frame as the profile photo. The image and numerical face sample are encrypted in PostgreSQL. The photo is available only to the signed-in owner and can be removed under **My profile**. Returning sign-ins do not use the camera or compare the saved face.
 
 Run `npm run db:migrate` before deploying this update. The additive `photo_cipher` column retains schema version 2 for compatibility with the currently running version, preserves accounts and history, and does not expire sessions. Keep the existing encryption key. The five-second feedback countdown shows changing seconds and a shrinking bar; Pause, navigation, quit confirmation, and tab hiding cancel advancement. Reduced-motion mode displays the numeric countdown without the moving bar.
 
 
 ## Face recognition switch
 
-Set `FACE_RECOGNITION_ENABLED=1` in your deployment environment to require face verification at sign-in (default). Set it to `0` to use username and password only. For local development, set the variable in your ignored `.env` file and restart the server. Redeploy after changing it in Vercel. When disabled, new accounts do not enroll or store a face template; existing templates stay encrypted in the database. Users without a template can still sign in when recognition is enabled and enroll one under **My profile → Enroll face template**. Users with an existing template will be prompted for face verification when the feature is enabled.
+Set `FACE_RECOGNITION_ENABLED=1` to require a one-time face capture when a new account is registered. The Vercel configuration enables it for the public deployment. Set it to `0` only when you need to allow registration without a camera. For local development, change the value in the ignored `.env` file and restart the server. This switch does not affect returning sign-in, which always uses username and password.
 
 
 ## Expanded geography question bank
