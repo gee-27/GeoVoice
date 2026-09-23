@@ -39,3 +39,27 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_cipher TEXT;
 
 -- Face recognition can be disabled for new accounts; retain existing templates.
 ALTER TABLE users ALTER COLUMN face_cipher DROP NOT NULL;
+
+CREATE TABLE IF NOT EXISTS live_rooms (
+ id TEXT PRIMARY KEY, pin TEXT NOT NULL UNIQUE, host_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ category TEXT NOT NULL, questions JSONB NOT NULL, team_mode BOOLEAN NOT NULL DEFAULT FALSE,
+ status TEXT NOT NULL DEFAULT 'lobby' CHECK(status IN ('lobby','question','feedback','paused','finished')),
+ round_index INTEGER NOT NULL DEFAULT 0, question_ms INTEGER NOT NULL,
+ deadline BIGINT, pause_remaining BIGINT, paused_stage TEXT,
+ created BIGINT NOT NULL, expires BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS live_rooms_host ON live_rooms(host_id,created DESC);
+CREATE TABLE IF NOT EXISTS live_players (
+ id TEXT PRIMARY KEY, room_id TEXT NOT NULL REFERENCES live_rooms(id) ON DELETE CASCADE,
+ token_hash TEXT NOT NULL UNIQUE, name TEXT NOT NULL, team TEXT, points INTEGER NOT NULL DEFAULT 0,
+ joined BIGINT NOT NULL, seen BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS live_players_room ON live_players(room_id);
+CREATE UNIQUE INDEX IF NOT EXISTS live_players_name ON live_players(room_id,LOWER(name));
+CREATE TABLE IF NOT EXISTS live_answers (
+ room_id TEXT NOT NULL REFERENCES live_rooms(id) ON DELETE CASCADE,
+ player_id TEXT NOT NULL REFERENCES live_players(id) ON DELETE CASCADE,
+ round_index INTEGER NOT NULL, selected INTEGER NOT NULL, correct BOOLEAN NOT NULL,
+ points INTEGER NOT NULL, answered BIGINT NOT NULL,
+ PRIMARY KEY(room_id,player_id,round_index)
+);

@@ -1,6 +1,6 @@
 # GeoVoice
 
-A Quizizz-style web application for learning geography.
+A geography quiz application for solo and live group play.
 
 GeoVoice is a geography quiz application with username/password sign-in and face verification. The same face may be used for multiple uniquely named accounts. Account data and quiz results are stored in PostgreSQL and work across devices.
 
@@ -34,7 +34,9 @@ Open http://localhost:4173. No phone number or SMS provider is required.
 - Ten or more accounts can use the same face; each account keeps independent results.
 - One-time recovery code for password reset or inaccessible face verification.
 - Password change, face re-enrollment, recovery-code replacement, data export, account deletion, and sign-out.
-- Forty geography questions, randomized answers, spoken/clicked/typed input, question narration, immediate explanations, automatic progression with pause, and paginated history.
+- Eighty geography questions across eight categories, randomized answers, spoken/clicked/typed input, question narration, immediate explanations, automatic progression with pause, and paginated history.
+- Live expeditions: a signed-in host creates a six-digit PIN and QR link; up to 30 guests join by nickname without accounts. The host can assign Atlas or Voyagers teams, and all players see timed rounds and live standings.
+- Live scoring awards 600 points for a correct answer plus up to 400 based on remaining time. The server keeps answers private until each six-second reveal and advances the room automatically.
 - Server-owned answer keys and scoring, with duplicate submission protection.
 - PostgreSQL migrations and cleanup, Vercel function adapter, Dockerfile, health endpoint, and security headers.
 - Responsive layout and accessible labels, native dialogs, keyboard focus, live status messages, and reduced-motion support.
@@ -69,12 +71,12 @@ The password protects account access. Face matching is an additional interaction
 
 The quiz is a learning app, not a proctored exam: the server protects score computation, but it cannot prevent someone looking up an answer. Accuracy across real cameras, skin tones, lighting, accents, and browsers still requires human testing.
 
-This code is prepared for deployment; it is not live until you provision services, configure secrets, run migrations, and deploy.
+The public deployment requires the configured PostgreSQL database and Vercel environment variables described in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Main files
 
 - `dist/`: public application, styles, face models, and vendored face-api.js.
-- `backend/api.mjs`: authenticated API, staged sessions, account management, quizzes, and history.
+- `backend/api.mjs` and `backend/live.mjs`: authenticated API, account management, solo quizzes, and live rooms.
 - `backend/security.mjs`: password hashing, face encryption, validation, and recovery codes.
 - `backend/schema.sql`: PostgreSQL schema.
 - `backend/questions.js`: server-only question bank and answer keys.

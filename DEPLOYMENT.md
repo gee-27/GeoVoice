@@ -48,6 +48,8 @@ npm run check
 
 The migration is idempotent and uses a PostgreSQL advisory lock. Run it against the intended production database before enabling production traffic. The normal Vercel build checks source but does not silently modify your database.
 
+The live-game update adds `live_rooms`, `live_players`, and `live_answers` tables. Run the migration before deploying this version. Existing accounts and solo quiz history are retained.
+
 ## 4. Import the source
 
 1. Create a private GitHub repository and add the source folder. Exclude `node_modules`, `.env`, local data, and backups; `.gitignore` is included.
@@ -88,6 +90,7 @@ The encryption key is bound to the database on first successful initialization. 
 7. Complete a quiz, reload, and verify the same history from another device after sign-in.
 8. Confirm account recovery, deletion, and data export using disposable test accounts.
 9. In Vercel, verify the daily `/api/maintenance` job succeeds. It requires `CRON_SECRET` and removes expired sessions, expired unfinished quizzes, stale rate-limit entries, and old unverified registrations.
+10. Create a live expedition from the home screen, join by QR or PIN in a second browser, assign teams, and confirm that both screens advance and show the same leaderboard. Live rooms expire after three hours; they use short HTTPS polling so no separate realtime service is required.
 
 If any check fails, close registration with `REGISTRATION_OPEN=0` while fixing it. This flag closes signup only; use provider access controls if you need to take the entire site offline.
 

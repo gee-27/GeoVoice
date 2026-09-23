@@ -2,6 +2,7 @@ import {randomUUID,createHmac} from 'node:crypto';
 import {HttpError,requireThat,token,digest,username,displayName,validatePassword,hashPassword,verifyPassword,validateSamples,encryptFace,decryptFace,recoveryCode,recoveryHash,validatePhoto} from './security.mjs';
 import {buildQuiz,matchesFace,distance,score} from '../dist/core.js';
 import {questions,categories} from './questions.js';
+import {createLiveApi} from './live.mjs';
 const minute=60000,hour=60*minute;
 const publicUser=u=>({id:u.id,username:u.username,name:u.name,created:new Date(Number(u.created)).toISOString(),hasPhoto:Boolean(u.photo_cipher),hasFace:Boolean(u.face_cipher)});
 const safeQuestion=q=>({id:q.id,category:q.category,prompt:q.prompt,options:q.options,...(q.difficulty?{difficulty:q.difficulty}:{})});
@@ -28,7 +29,7 @@ export function createApi({db,config,now=Date.now}){
  async function getUser(s,client=db,lock=false){const u=await one('SELECT * FROM users WHERE id=$1'+(lock?' FOR UPDATE':''),[s.user_id],client);requireThat(u&&u.auth_version===s.auth_version,401,'Your session has expired. Please sign in again.');return u;}
  async function sensitivePassword(s,password){await limit('password:'+s.user_id,8,15*minute);const u=await getUser(s);requireThat(await verifyPassword(password,u.password_hash),403,'Your current password is incorrect.');return u;}
  async function parseBody(req){requireThat((req.headers['content-type']||'').split(';')[0]==='application/json',415,'Send JSON requests.');if(req.body&&typeof req.body==='object'){requireThat(Buffer.byteLength(JSON.stringify(req.body))<=131072,413,'Request is too large.');return req.body;}let data='',size=0;for await(const chunk of req){size+=chunk.length;requireThat(size<=131072,413,'Request is too large.');data+=chunk;}try{const value=JSON.parse(data||'{}');requireThat(value&&typeof value==='object'&&!Array.isArray(value),400,'Invalid request.');return value;}catch{throw new HttpError(400,'Invalid JSON request.');}}
- async function cleanExpired(){await db.query('DELETE FROM sessions WHERE expires<$1',[now()]);await db.query('DELETE FROM rate_limits WHERE reset_at<$1',[now()]);await db.query('DELETE FROM quizzes WHERE completed IS NULL AND expires<$1',[now()]);await db.query('DELETE FROM users WHERE verified=FALSE AND created<$1',[now()-24*hour]);}
+ async function cleanExpired(){await db.query('DELETE FROM live_rooms WHERE expires<$1',[now()]);await db.query('DELETE FROM sessions WHERE expires<$1',[now()]);await db.query('DELETE FROM rate_limits WHERE reset_at<$1',[now()]);await db.query('DELETE FROM quizzes WHERE completed IS NULL AND expires<$1',[now()]);await db.query('DELETE FROM users WHERE verified=FALSE AND created<$1',[now()-24*hour]);}
  async function handle(req,res){const requestId=randomUUID();for(const [name,value]of Object.entries(SECURITY_HEADERS))res.setHeader(name,value);if(config.production)res.setHeader('Strict-Transport-Security','max-age=31536000');res.setHeader('X-Request-Id',requestId);
  try{
   await ready;
@@ -37,7 +38,7 @@ export function createApi({db,config,now=Date.now}){
   if(route==='/api/health'&&method==='GET'){await db.query('SELECT 1');return send(res,200,{status:'ok'});}
   if(route==='/api/config'&&method==='GET')return send(res,200,{categories,registrationOpen:config.registration,operator:config.operator,privacyContact:config.privacyContact,consentVersion:'2026-09-22',faceRecognitionEnabled:config.faceRecognition,authentication:config.faceRecognition?['password','face']:['password']});
   const ip=config.trustProxy?String(req.headers['x-forwarded-for']||'').split(',').map(s=>s.trim()).filter(Boolean).at(-1)||req.socket?.remoteAddress:req.socket?.remoteAddress;
-  await limit('request:'+keyed(ip||'unknown'),240,minute);
+  if(!(route.match(/^\/api\/live\/rooms\/[a-f0-9-]{36}$/)&&method==='GET'))await limit('request:'+keyed(ip||'unknown'),240,minute);
   let body={};
   if(!['GET','HEAD'].includes(method)){requireThat(req.headers.origin===config.origin&&req.headers['x-geovoice']==='1',403,'This request origin is not allowed.');body=await parseBody(req);}
   const s=await session(req);
@@ -70,6 +71,7 @@ export function createApi({db,config,now=Date.now}){
    requireThat(matchesFace(samples,decryptFace(u.face_cipher,config.key,u.id)),401,'Your face was not recognized. Check your lighting and try again.');
    const response=await db.transaction(async c=>{const current=await getUser(s,c,true);const deleted=await c.query("DELETE FROM sessions WHERE id_hash=$1 AND stage='face' RETURNING id_hash",[s.id_hash]);requireThat(deleted.rows.length,409,'This sign-in step has already been used.');let code=null;if(!current.verified){code=recoveryCode();await c.query('UPDATE users SET verified=TRUE,recovery_hash=$1 WHERE id=$2',[recoveryHash(code),current.id]);}if(photo){current.photo_cipher=encryptFace(photo,config.key,current.id+':photo');await c.query('UPDATE users SET photo_cipher=$1 WHERE id=$2',[current.photo_cipher,current.id]);}return {...await issue(c,res,current,'full'),recoveryCode:code};});return send(res,200,response);
   }
+  if(route.startsWith('/api/live/')){const live=createLiveApi({db,config,now,one,send,limit,requireSession,session:s,ip,keyed});if(await live(req,res,route,method,body)!==false)return;}
   requireSession();
   if(route==='/api/account/photo'&&method==='GET'){const u=await getUser(s);requireThat(u.photo_cipher,404,'No profile photo saved.');return send(res,200,{photo:decryptFace(u.photo_cipher,config.key,u.id+':photo')});}
   if(route==='/api/account/photo'&&method==='DELETE'){await db.query('UPDATE users SET photo_cipher=NULL WHERE id=$1',[s.user_id]);return send(res,200,{ok:true});}
