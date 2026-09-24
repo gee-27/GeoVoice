@@ -15,6 +15,8 @@ export const SECURITY_HEADERS={
 export function createApi({db,config,now=Date.now}){
  const cookieName=config.production?'__Host-geovoice':'geovoice';
  const keyed=value=>createHmac('sha256',config.key).update(value).digest('hex');
+ const guestQuizToken=state=>encryptFace(state,config.key,'guest-quiz');
+ function readGuestQuiz(value){try{const state=decryptFace(value,config.key,'guest-quiz');requireThat(state&&Number(state.expires)>now()&&Array.isArray(state.questions)&&Array.isArray(state.answers),410,'This guest quiz has expired. Start another quiz.');return state;}catch(error){if(error instanceof HttpError)throw error;throw new HttpError(401,'This guest quiz is invalid. Start another quiz.');}}
  async function one(sql,values=[],client=db){return (await client.query(sql,values)).rows[0];}
  const ready=(async()=>{const version=await one("SELECT value FROM metadata WHERE key='schema_version'");if(version?.value!=='2')throw Object.assign(new Error('Run database migrations before starting.'),{code:'SCHEMA_MIGRATION_REQUIRED'});const fingerprint=digest(config.key);await db.query("INSERT INTO metadata(key,value) VALUES ('key_fingerprint',$1) ON CONFLICT DO NOTHING",[fingerprint]);const stored=await one("SELECT value FROM metadata WHERE key='key_fingerprint'");if(stored.value!==fingerprint)throw Object.assign(new Error('Encryption key does not match this database.'),{code:'ENCRYPTION_KEY_MISMATCH'});})();
  // Attach a rejection handler immediately; requests still receive the failure through await ready.
@@ -67,6 +69,17 @@ export function createApi({db,config,now=Date.now}){
 
   if(route==='/api/auth/logout'&&method==='POST'){requireSession('any');await db.query('DELETE FROM sessions WHERE id_hash=$1',[s.id_hash]);setCookie(res,'',0);return send(res,200,{ok:true});}
   if(route.startsWith('/api/live/')){const live=createLiveApi({db,config,now,one,send,limit,requireSession,session:s,ip,keyed});if(await live(req,res,route,method,body)!==false)return;}
+  if(route==='/api/guest/quizzes'&&method==='POST'){
+   await limit('guest-quiz-start:'+keyed(ip||'unknown'),30,hour);requireThat(['All',...categories].includes(body.category)&&[5,10].includes(body.count),400,'Choose a valid topic and 5 or 10 questions.');
+   const bank=buildQuiz(questions,body.category,body.count),id=randomUUID(),t=now(),state={id,category:body.category,questions:bank,answers:[],started:t,expires:t+2*hour};
+   return send(res,201,{id,category:state.category,total:bank.length,index:0,correct:0,question:safeQuestion(bank[0]),guestToken:guestQuizToken(state)});
+  }
+  if(route==='/api/guest/quizzes/answer'&&method==='POST'){
+   await limit('guest-quiz-answer:'+keyed(ip||'unknown'),180,hour);requireThat(typeof body.guestToken==='string'&&body.guestToken.length<=131072,400,'Guest quiz information is missing. Start another quiz.');
+   requireThat(Number.isInteger(body.index)&&Number.isInteger(body.selected)&&body.selected>=0&&body.selected<=3,400,'Choose a valid answer.');const state=readGuestQuiz(body.guestToken);
+   requireThat(body.index===state.answers.length&&body.index<state.questions.length,409,'That question is not awaiting an answer.');const answer={selected:body.selected,question:state.questions[body.index]};state.answers.push(answer);
+   const complete=state.answers.length===state.questions.length,correct=score(state.answers).correct;return send(res,200,{answer,correct,next:complete?null:{id:state.id,category:state.category,total:state.questions.length,index:state.answers.length,correct,question:safeQuestion(state.questions[state.answers.length])},result:complete?{id:state.id,category:state.category,date:new Date(now()).toISOString(),duration:Math.round((now()-Number(state.started))/1000),answers:state.answers,...score(state.answers)}:null,guestToken:complete?null:guestQuizToken(state)});
+  }
   requireSession();
   if(route==='/api/account/photo'&&method==='GET'){const u=await getUser(s);requireThat(u.photo_cipher,404,'No profile photo saved.');return send(res,200,{photo:decryptFace(u.photo_cipher,config.key,u.id+':photo')});}
   if(route==='/api/account/photo'&&method==='DELETE'){await db.query('UPDATE users SET photo_cipher=NULL WHERE id=$1',[s.user_id]);return send(res,200,{ok:true});}

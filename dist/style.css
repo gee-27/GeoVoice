@@ -190,3 +190,4 @@ footer{padding:8px 24px}footer>span{display:none}.home-actions{margin:0 0 14px}
  [data-view=quiz] .context-photo figcaption{display:none}
  [data-view=quiz] .quiz-layout .voice-panel{gap:5px}
 }
+.guest-button{background:#19814d!important;border-color:#126a3e!important;box-shadow:4px 4px 0 #172f3b!important}.guest-button:hover{background:#126f41!important}.guest-note{text-align:center;margin:8px 0 2px}.guest-mode [data-nav][hidden]{display:none!important}.guest-mode .sidebar nav{justify-content:flex-start}
