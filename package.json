@@ -11,6 +11,7 @@
   "setup": "node scripts/setup.mjs",
   "db:migrate": "node scripts/migrate.mjs",
   "db:cleanup": "node scripts/cleanup.mjs",
+  "voice:generate": "node scripts/generate-voice.mjs",
   "test": "node --test --test-concurrency=1 tests/*.test.mjs",
   "check": "node scripts/check.mjs",
   "build": "node scripts/check.mjs",

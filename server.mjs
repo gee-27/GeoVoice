@@ -6,14 +6,14 @@ import handler from './api/index.mjs';
 import {SECURITY_HEADERS} from './backend/api.mjs';
 try{process.loadEnvFile();}catch(e){if(e.code!=='ENOENT')throw e;}
 const root=fileURLToPath(new URL('./dist/',import.meta.url));
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2','.mp3':'audio/mpeg'};
 export function createServer(apiHandler=handler){return http.createServer({maxHeaderSize:16384,requestTimeout:30000,headersTimeout:10000},async(req,res)=>{
  try{const url=new URL(req.url,'http://localhost');if(url.pathname.startsWith('/api/'))return await apiHandler(req,res);
  for(const [name,value]of Object.entries(SECURITY_HEADERS))res.setHeader(name,value);
  if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}
  const pathname=decodeURIComponent(url.pathname);const filename=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
  if(!filename.startsWith(root)||pathname.split('/').some(p=>p.startsWith('.'))){res.writeHead(404);return res.end('Not found');}
- const body=await readFile(filename);res.writeHead(200,{'Content-Type':types[path.extname(filename)]||'application/octet-stream','Cache-Control':pathname.startsWith('/models/')||pathname.startsWith('/vendor/')?'public, max-age=86400':'no-cache'});res.end(req.method==='HEAD'?undefined:body);
+ const body=await readFile(filename);res.writeHead(200,{'Content-Type':types[path.extname(filename)]||'application/octet-stream','Cache-Control':pathname.startsWith('/models/')||pathname.startsWith('/vendor/')||pathname.endsWith('.mp3')?'public, max-age=86400':'no-cache'});res.end(req.method==='HEAD'?undefined:body);
  }catch{if(!res.headersSent)res.writeHead(404);res.end('Not found');}
  });}
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
